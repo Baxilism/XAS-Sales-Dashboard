@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xiaomi Indonesia — Sales Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1117;--bg2:#161b24;--bg3:#1e2533;--bg4:#252d3d;
+  --border:#2a3347;--border2:#374159;
+  --text:#e8edf5;--text2:#8b96b0;--text3:#5a6480;
+  --orange:#ff6b35;--orange2:#ff8c5a;--orange-bg:rgba(255,107,53,0.12);
+  --blue:#4a9eff;--blue-bg:rgba(74,158,255,0.1);
+  --green:#3dd68c;--green-bg:rgba(61,214,140,0.1);
+  --red:#ff5252;--red-bg:rgba(255,82,82,0.1);
+  --yellow:#ffc947;--yellow-bg:rgba(255,201,71,0.1);
+  --purple:#b57af5;--purple-bg:rgba(181,122,245,0.1);
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --r:8px;--r2:12px;--r3:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh;}
+.app{max-width:1400px;margin:0 auto;padding:24px 20px;}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.header-left{display:flex;align-items:center;gap:14px;}
+.logo{width:36px;height:36px;background:var(--orange);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;letter-spacing:-1px;}
+.header-title{font-size:20px;font-weight:600;letter-spacing:-0.3px;}
+.header-sub{font-size:13px;color:var(--text2);margin-top:1px;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.export-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);background:var(--orange);color:#fff;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:var(--font);transition:opacity 0.15s;}
+.export-btn:hover{opacity:0.85;}
+.print-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--r);background:var(--bg3);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border2);font-family:var(--font);transition:all 0.15s;}
+.print-btn:hover{color:var(--text);border-color:var(--text3);}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--bg2);padding:4px;border-radius:var(--r2);width:fit-content;}
+.tab{padding:7px 18px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);border:none;background:transparent;font-family:var(--font);transition:all 0.15s;}
+.tab.active{background:var(--bg4);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+
+/* FILTERS */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center;}
+.filter-group{display:flex;align-items:center;gap:6px;}
+.filter-label{font-size:12px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:0.05em;}
+select{background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:var(--r);font-size:13px;font-family:var(--font);cursor:pointer;outline:none;}
+select:focus{border-color:var(--orange);}
+.filter-sep{width:1px;height:20px;background:var(--border);}
+
+/* PARTNER PILLS */
+.partner-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
+.p-pill{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid transparent;transition:all 0.15s;color:var(--text2);background:var(--bg3);}
+.p-pill.active{color:#fff;}
+.p-pill[data-p="all"].active{background:var(--orange);border-color:var(--orange);}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;}
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr);}}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi.orange::before{background:var(--orange);}
+.kpi.blue::before{background:var(--blue);}
+.kpi.green::before{background:var(--green);}
+.kpi.yellow::before{background:var(--yellow);}
+.kpi.purple::before{background:var(--purple);}
+.kpi.red::before{background:var(--red);}
+.kpi-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:500;margin-bottom:6px;}
+.kpi-value{font-size:22px;font-weight:600;letter-spacing:-0.5px;line-height:1;}
+.kpi-sub{font-size:12px;margin-top:5px;display:flex;align-items:center;gap:4px;}
+.up{color:var(--green);}.down{color:var(--red);}.neutral{color:var(--text2);}
+
+/* CHARTS GRID */
+.charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px;}
+.charts-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px;}
+.card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.card-title span{font-size:11px;font-weight:400;color:var(--text3);}
+.chart-wrap{position:relative;}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg3);}
+.rank{color:var(--text3);font-family:var(--mono);font-size:12px;}
+.store-name{max-width:170px;font-size:12px;line-height:1.3;}
+.partner-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;white-space:nowrap;}
+.ach-wrap{display:flex;align-items:center;gap:6px;min-width:90px;}
+.ach-bar{height:5px;background:var(--bg4);border-radius:3px;flex:1;}
+.ach-fill{height:5px;border-radius:3px;}
+.mom-badge{font-size:11px;padding:2px 8px;border-radius:10px;white-space:nowrap;font-family:var(--mono);}
+.mom-up{background:var(--green-bg);color:var(--green);}
+.mom-down{background:var(--red-bg);color:var(--red);}
+.mom-new{background:var(--blue-bg);color:var(--blue);}
+.so-num{font-family:var(--mono);font-size:12px;}
+
+/* ANALYSIS TAB */
+.analysis-wrap{display:flex;flex-direction:column;gap:16px;}
+.analysis-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:20px 22px;}
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.section-icon{width:32px;height:32px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.section-title{font-size:15px;font-weight:600;}
+.section-sub{font-size:12px;color:var(--text2);margin-top:1px;}
+.exec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;}
+.exec-stat{background:var(--bg3);border-radius:var(--r);padding:12px 14px;}
+.exec-stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;}
+.exec-stat-val{font-size:18px;font-weight:600;}
+.exec-stat-note{font-size:12px;color:var(--text2);margin-top:2px;}
+.insight-list{display:flex;flex-direction:column;gap:8px;}
+.insight-item{display:flex;gap:10px;padding:10px 12px;border-radius:var(--r);background:var(--bg3);}
+.insight-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.insight-text{font-size:13px;color:var(--text);line-height:1.5;}
+.insight-text strong{color:var(--text);font-weight:600;}
+.insight-text .note{color:var(--text2);font-size:12px;}
+.store-analysis-grid{display:flex;flex-direction:column;gap:8px;}
+.store-row{background:var(--bg3);border-radius:var(--r);padding:12px 14px;border-left:3px solid transparent;}
+.store-row.great{border-left-color:var(--green);}
+.store-row.good{border-left-color:var(--blue);}
+.store-row.warn{border-left-color:var(--yellow);}
+.store-row.bad{border-left-color:var(--red);}
+.store-row-header{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.store-row-name{font-size:13px;font-weight:600;}
+.store-row-meta{font-size:12px;color:var(--text2);}
+.store-row-body{font-size:12px;color:var(--text2);line-height:1.5;}
+.store-row-body .highlight{color:var(--text);font-weight:500;}
+.action-tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--orange-bg);color:var(--orange);margin-top:5px;margin-right:4px;}
+
+/* MONTH SELECTOR */
+.month-selector{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;}
+.month-btn{padding:4px 10px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-family:var(--font);transition:all 0.15s;}
+.month-btn.active{background:var(--orange);color:#fff;border-color:var(--orange);}
+.month-btn:hover:not(.active){color:var(--text);border-color:var(--text3);}
+
+/* LEGEND */
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);}
+.leg-dot{width:9px;height:9px;border-radius:2px;}
+
+/* PRINT */
+@media print{
+  body{background:#fff;color:#000;}
+  .no-print{display:none!important;}
+  .card,.analysis-section,.kpi{background:#fff;border:1px solid #ddd;break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header no-print">
+  <div class="header-left">
+    <div class="logo">Mi</div>
+    <div>
+      <div class="header-title">Xiaomi Indonesia Sales Dashboard</div>
+      <div class="header-sub">Jakarta–Banten Region · Jan 2025 – Apr 2026 · 50 stores</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="print-btn" onclick="window.print()">⎙ Print</button>
+    <button class="export-btn" onclick="exportReport()">↓ Export Report</button>
+  </div>
+</div>
+
+<div class="tabs no-print">
+  <button class="tab active" onclick="showTab('dashboard',this)">Dashboard</button>
+  <button class="tab" onclick="showTab('analysis',this)">Weekly Analysis</button>
+</div>
+
+<!-- DASHBOARD TAB -->
+<div id="tab-dashboard">
+
+  <div class="month-selector no-print" id="monthSelector"></div>
+
+  <div class="partner-pills no-print" id="partnerPills"></div>
+
+  <div class="filters no-print">
+    <div class="filter-group">
+      <span class="filter-label">Area</span>
+      <select id="areaFilter" onchange="applyFilters()">
+        <option value="all">All communities</option>
+        <option value="Jakarta - North West Central (NR)">North West Central</option>
+        <option value="Jakarta - Tangerang (NR)">Tangerang</option>
+        <option value="Jakarta - Bogor Depok (NR)">Bogor Depok</option>
+        <option value="Jakarta - Bekasi (NR)">Bekasi</option>
+        <option value="Jakarta - Banten (NR)">Banten</option>
+        <option value="Jakarta - South East (NR)">South East</option>
+      </select>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <span class="filter-label">Type</span>
+      <select id="typeFilter" onchange="applyFilters()">
+        <option value="all">All types</option>
+        <option value="Authorized Sail store">Authorized Sail</option>
+        <option value="New authorized store">New Authorized</option>
+      </select>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <span class="filter-label">Compare</span>
+      <select id="compareMode" onchange="applyFilters()">
+        <option value="mom">MoM</option>
+        <option value="yoy">YoY</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="charts-grid">
+    <div class="card">
+      <div class="card-title">GMV Trend — Monthly <span id="trendNote"></span></div>
+      <div class="chart-wrap" style="height:220px"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">GMV by Partner <span id="partnerMonth"></span></div>
+      <div class="legend" id="partnerLegend"></div>
+      <div class="chart-wrap" style="height:190px"><canvas id="partnerChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-grid2">
+    <div class="card">
+      <div class="card-title">MoM Change by Store <span>(top 15)</span></div>
+      <div class="chart-wrap" id="momChartWrap" style="height:340px"><canvas id="momChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Achievement Rate Distribution</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="achChart"></canvas></div>
+      <div style="margin-top:14px;">
+        <div class="card-title" style="margin-bottom:10px;">Partner Achievement <span id="partnerAchMonth"></span></div>
+        <div id="partnerAchBars"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">Store Performance Ranking <span id="tableMonth"></span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Store</th><th>Partner</th><th>Community</th>
+          <th>GMV (M)</th><th>vs Target</th><th>MoM / YoY</th>
+          <th>Phone SO</th><th>High-end</th><th>Tablet SO</th>
+        </tr></thead>
+        <tbody id="storeTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ANALYSIS TAB -->
+<div id="tab-analysis" style="display:none;">
+  <div class="analysis-wrap" id="analysisContent"></div>
+</div>
+
+</div>
+
+<script>
+const DATA = {"stores":[{"id":"SQID00002","n":"Grand Jakarta","c":"Jakarta - South East (NR)","tp":"Authorized Sail store","p":"Unknown","mg":"-","m":{"01-2025":{"g":1092051400,"t":708482808,"p":147,"pt":104,"h":58,"tb":37,"st":"Store Closure Process"},"02-2025":{"g":777912200,"t":497338173,"p":140,"pt":94,"h":19,"tb":41,"st":"Store Closure Process"},"03-2025":{"g":1005079100,"t":627192668,"p":106,"pt":80,"h":34,"tb":45,"st":"Store Closure Process"},"04-2025":{"g":1567745500,"t":564829681,"p":174,"pt":108,"h":43,"tb":78,"st":"Store Closure Process"},"05-2025":{"g":1165731900,"t":977344747,"p":148,"pt":180,"h":37,"tb":56,"st":"Store Closure Process"},"06-2025":{"g":1811984300,"t":1085707500,"p":2490,"pt":180,"h":78,"tb":73,"st":"Store Closure Process"},"07-2025":{"g":674460500,"t":1447377278,"p":770,"pt":2410,"h":30,"tb":53,"st":"Store Closure Process"},"08-2025":{"g":360363400,"t":1332536183,"p":39,"pt":146,"h":5,"tb":21,"st":"Store Closure Process"},"09-2025":{"g":637979200,"t":607058652,"p":1040,"pt":970,"h":6,"tb":540,"st":"Store Closure Process"},"10-2025":{"g":1459917000,"t":1122727012,"p":1430,"pt":1220,"h":480,"tb":980,"st":"Store Closure Process"},"11-2025":{"g":1200409000,"t":947197012,"p":1200,"pt":990,"h":370,"tb":630,"st":"Store Closure Process"},"12-2025":{"g":1612635000,"t":1339438855,"p":159,"pt":1620,"h":55,"tb":96,"st":"Store Closure Process"},"01-2026":{"g":989897000,"t":1415179721,"p":101,"pt":1630,"h":36,"tb":52,"st":"Store Closure Process"},"02-2026":{"g":741854000,"t":1380575000,"p":92,"pt":200,"h":18,"tb":33,"st":"Store Closure Process"},"03-2026":{"g":1175994000,"t":1837271758,"p":870,"pt":2300,"h":290,"tb":600,"st":"Store Closure Process"},"04-2026":{"g":31828000,"t":0,"p":7,"pt":0,"h":0,"tb":0,"st":"Store Closure Process"}}},{"id":"SQID00099","n":"Living World Kota Wisata Cibubur","c":"Jakarta - Bogor Depok (NR)","tp":"New authorized store","p":"Unknown","mg":"-","m":{"05-2025":{"g":0,"t":582777501,"p":0,"pt":100,"h":0,"tb":0,"st":"Store Closure Process"},"06-2025":{"g":89766000,"t":553139400,"p":130,"pt":100,"h":0,"tb":3,"st":"Store Closure Process"},"07-2025":{"g":115949700,"t":509040023,"p":200,"pt":800,"h":10,"tb":2,"st":"Store Closure Process"},"08-2025":{"g":428729500,"t":139433522,"p":49,"pt":17,"h":7,"tb":53,"st":"Store Closure Process"},"09-2025":{"g":246716600,"t":602028077,"p":290,"pt":970,"h":5,"tb":190,"st":"Store Closure Process"},"10-2025":{"g":687994000,"t":844350604,"p":920,"pt":1040,"h":370,"tb":460,"st":"Store Closure Process"},"11-2025":{"g":608757000,"t":397061910,"p":840,"pt":540,"h":210,"tb":440,"st":"Store Closure Process"},"12-2025":{"g":892021000,"t":644648418,"p":96,"pt":950,"h":37,"tb":55,"st":"Store Closure Process"},"01-2026":{"g":677689000,"t":803824728,"p":72,"pt":960,"h":26,"tb":45,"st":"Store Closure Process"},"02-2026":{"g":661479000,"t":800333325,"p":94,"pt":110,"h":12,"tb":50,"st":"Store Closure Process"},"03-2026":{"g":831854000,"t":1016277693,"p":870,"pt":1270,"h":170,"tb":410,"st":"Store Closure Process"},"04-2026":{"g":0,"t":0,"p":0,"pt":0,"h":0,"tb":0,"st":"Store Closure Process"}}},{"id":"SQID00014","n":"Gandaria City Jakarta","c":"Jakarta - South East (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Andy Antonius","m":{"05-2025":{"g":164409000,"t":0,"p":29,"pt":0,"h":5,"tb":12,"st":"Normal Operation"},"06-2025":{"g":505892000,"t":0,"p":930,"pt":0,"h":13,"tb":35,"st":"Normal Operation"},"07-2025":{"g":3142865600,"t":1748881783,"p":4440,"pt":2920,"h":600,"tb":159,"st":"Normal Operation"},"08-2025":{"g":1162236200,"t":1585287369,"p":151,"pt":214,"h":26,"tb":64,"st":"Normal Operation"},"09-2025":{"g":837826200,"t":1403602747,"p":1100,"pt":1860,"h":17,"tb":330,"st":"Normal Operation"},"10-2025":{"g":1443535000,"t":1396963809,"p":1770,"pt":1680,"h":750,"tb":380,"st":"Normal Operation"},"11-2025":{"g":1084085000,"t":1167368782,"p":1120,"pt":1450,"h":380,"tb":590,"st":"Normal Operation"},"12-2025":{"g":1190982000,"t":1276255451,"p":138,"pt":1680,"h":42,"tb":77,"st":"Normal Operation"},"01-2026":{"g":1260524000,"t":1318982295,"p":119,"pt":1600,"h":50,"tb":60,"st":"Normal Operation"},"02-2026":{"g":1013560000,"t":1218956103,"p":113,"pt":170,"h":21,"tb":39,"st":"Normal Operation"},"03-2026":{"g":2448332000,"t":1454035228,"p":3150,"pt":1960,"h":720,"tb":860,"st":"Normal Operation"},"04-2026":{"g":1774542000,"t":1717175747,"p":245,"pt":1800,"h":48,"tb":69,"st":"Normal Operation"}}},{"id":"SQID00013","n":"Central Park Mall Jakarta","c":"Jakarta - North West Central (NR)","tp":"Authorized Sail store","p":"PPP REG5","mg":"-","m":{"05-2025":{"g":178288000,"t":0,"p":34,"pt":0,"h":5,"tb":12,"st":"Normal Operation"},"06-2025":{"g":1074561000,"t":0,"p":1530,"pt":0,"h":28,"tb":72,"st":"Normal Operation"},"07-2025":{"g":2049353300,"t":1882909436,"p":2830,"pt":3140,"h":720,"tb":139,"st":"Normal Operation"},"08-2025":{"g":1455576600,"t":1816376580,"p":183,"pt":229,"h":28,"tb":105,"st":"Normal Operation"},"09-2025":{"g":1070648400,"t":1235410084,"p":1790,"pt":1470,"h":24,"tb":440,"st":"Normal Operation"},"10-2025":{"g":1873796000,"t":1894114581,"p":2200,"pt":2480,"h":1040,"tb":610,"st":"Normal Operation"},"11-2025":{"g":1387993000,"t":1506324015,"p":1580,"pt":1930,"h":470,"tb":910,"st":"Normal Operation"},"12-2025":{"g":1801915000,"t":1768676332,"p":226,"pt":2590,"h":73,"tb":76,"st":"Normal Operation"},"01-2026":{"g":1329456000,"t":1753451671,"p":144,"pt":2200,"h":42,"tb":62,"st":"Normal Operation"},"02-2026":{"g":1188730000,"t":1592663325,"p":123,"pt":222,"h":20,"tb":53,"st":"Normal Operation"},"03-2026":{"g":2625358000,"t":2169113591,"p":2170,"pt":2640,"h":960,"tb":840,"st":"Normal Operation"},"04-2026":{"g":1689511000,"t":1945284655,"p":182,"pt":2100,"h":51,"tb":55,"st":"Normal Operation"}}},{"id":"SQID00012","n":"Mall Ambassador Jakarta","c":"Jakarta - South East (NR)","tp":"Authorized Sail store","p":"GTN","mg":"William Hardi Wijaya","m":{"05-2025":{"g":0,"t":626021982,"p":0,"pt":131,"h":0,"tb":0,"st":"Normal Operation"},"06-2025":{"g":635751700,"t":670852950,"p":1260,"pt":150,"h":20,"tb":23,"st":"Normal Operation"},"07-2025":{"g":876741000,"t":0,"p":1890,"pt":0,"h":140,"tb":52,"st":"Normal Operation"},"08-2025":{"g":992147400,"t":885944426,"p":148,"pt":171,"h":30,"tb":88,"st":"Normal Operation"},"09-2025":{"g":690806700,"t":689597404,"p":1210,"pt":1000,"h":17,"tb":500,"st":"Normal Operation"},"10-2025":{"g":1200279000,"t":1257778745,"p":1600,"pt":1760,"h":510,"tb":640,"st":"Normal Operation"},"11-2025":{"g":841386000,"t":1025711595,"p":980,"pt":1540,"h":300,"tb":570,"st":"Normal Operation"},"12-2025":{"g":989940000,"t":1049870422,"p":127,"pt":1590,"h":34,"tb":40,"st":"Normal Operation"},"01-2026":{"g":899122000,"t":1026666767,"p":106,"pt":1500,"h":30,"tb":41,"st":"Normal Operation"},"02-2026":{"g":933943000,"t":989412075,"p":155,"pt":140,"h":29,"tb":35,"st":"Normal Operation"},"03-2026":{"g":1184431000,"t":1196115228,"p":1350,"pt":1550,"h":340,"tb":500,"st":"Normal Operation"},"04-2026":{"g":1068732000,"t":1000607024,"p":124,"pt":1100,"h":27,"tb":44,"st":"Normal Operation"}}},{"id":"SQID00011","n":"Lippo Mall Kemang Jakarta","c":"Jakarta - South East (NR)","tp":"Authorized Sail store","p":"Unknown","mg":"-","m":{"05-2025":{"g":118000,"t":500967495,"p":0,"pt":79,"h":0,"tb":0,"st":"Store Closure Process"},"06-2025":{"g":208983000,"t":861708900,"p":210,"pt":130,"h":8,"tb":13,"st":"Store Closure Process"},"07-2025":{"g":944421600,"t":661508091,"p":1250,"pt":1100,"h":240,"tb":65,"st":"Store Closure Process"},"08-2025":{"g":565506600,"t":659992440,"p":88,"pt":79,"h":6,"tb":36,"st":"Store Closure Process"},"09-2025":{"g":408463000,"t":606229720,"p":420,"pt":970,"h":8,"tb":260,"st":"Store Closure Process"},"10-2025":{"g":596137000,"t":764846866,"p":770,"pt":860,"h":230,"tb":370,"st":"Store Closure Process"},"11-2025":{"g":63229000,"t":424093230,"p":160,"pt":610,"h":10,"tb":30,"st":"Store Closure Process"},"12-2025":{"g":0,"t":325124848,"p":0,"pt":500,"h":0,"tb":0,"st":"Store Closure Process"},"02-2026":{"g":0,"t":0,"p":0,"pt":0,"h":0,"tb":0,"st":"Store Closure Process"}}},{"id":"SQID00008","n":"Plaza Jambu 2 Bogor","c":"Jakarta - Bogor Depok (NR)","tp":"Authorized Sail store","p":"GTN","mg":"Mega Susila Wati","m":{"05-2025":{"g":0,"t":965120200,"p":0,"pt":252,"h":0,"tb":0,"st":"Normal Operation"},"06-2025":{"g":371585800,"t":973708200,"p":1030,"pt":250,"h":11,"tb":23,"st":"Normal Operation"},"07-2025":{"g":739451900,"t":1069755275,"p":2430,"pt":1800,"h":90,"tb":36,"st":"Normal Operation"},"08-2025":{"g":1916507500,"t":1329171609,"p":509,"pt":349,"h":36,"tb":126,"st":"Normal Operation"},"09-2025":{"g":911284500,"t":1247881778,"p":2250,"pt":3250,"h":12,"tb":840,"st":"Normal Operation"},"10-2025":{"g":1243150000,"t":1523290618,"p":2640,"pt":3620,"h":410,"tb":890,"st":"Normal Operation"},"11-2025":{"g":1151166000,"t":1239811515,"p":2410,"pt":2740,"h":340,"tb":710,"st":"Normal Operation"},"12-2025":{"g":1260752000,"t":1397447812,"p":263,"pt":3300,"h":39,"tb":76,"st":"Normal Operation"},"01-2026":{"g":868812000,"t":1351475124,"p":163,"pt":2800,"h":15,"tb":67,"st":"Normal Operation"},"02-2026":{"g":1062800000,"t":880366675,"p":209,"pt":125,"h":15,"tb":62,"st":"Normal Operation"},"03-2026":{"g":1685303000,"t":1592109413,"p":2620,"pt":2000,"h":440,"tb":1030,"st":"Normal Operation"},"04-2026":{"g":1209011000,"t":1170174901,"p":200,"pt":1660,"h":29,"tb":66,"st":"Normal Operation"}}},{"id":"SQID00103","n":"Mall of Serang Banten","c":"Jakarta - Banten (NR)","tp":"Authorized Sail store","p":"Fonel","mg":"Rosita","m":{"06-2025":{"g":165587000,"t":623996100,"p":430,"pt":120,"h":3,"tb":3,"st":"Normal Operation"},"07-2025":{"g":73700000,"t":690546176,"p":180,"pt":1200,"h":40,"tb":0,"st":"Normal Operation"},"08-2025":{"g":91636000,"t":521815985,"p":22,"pt":129,"h":0,"tb":2,"st":"Normal Operation"},"09-2025":{"g":86791000,"t":602028077,"p":280,"pt":970,"h":0,"tb":10,"st":"Normal Operation"},"10-2025":{"g":339518000,"t":778598772,"p":600,"pt":960,"h":180,"tb":270,"st":"Normal Operation"},"11-2025":{"g":222082000,"t":278100000,"p":370,"pt":220,"h":80,"tb":250,"st":"Normal Operation"},"12-2025":{"g":130452000,"t":343211160,"p":26,"pt":670,"h":4,"tb":7,"st":"Normal Operation"},"01-2026":{"g":489450000,"t":411894382,"p":82,"pt":670,"h":8,"tb":35,"st":"Normal Operation"},"02-2026":{"g":1043514000,"t":420175000,"p":214,"pt":70,"h":27,"tb":41,"st":"Normal Operation"},"03-2026":{"g":804991000,"t":391019760,"p":1250,"pt":500,"h":200,"tb":530,"st":"Normal Operation"},"04-2026":{"g":627038000,"t":584258032,"p":78,"pt":750,"h":13,"tb":56,"st":"Normal Operation"}}},{"id":"SQID00100","n":"Mall Ciputra Tangerang","c":"Jakarta - Tangerang (NR)","tp":"Authorized Sail store","p":"PPP REG5","mg":"Willy Wijaya","m":{"06-2025":{"g":241549000,"t":0,"p":500,"pt":0,"h":4,"tb":19,"st":"Normal Operation"},"07-2025":{"g":2137255000,"t":734894374,"p":4250,"pt":1300,"h":440,"tb":161,"st":"Normal Operation"},"08-2025":{"g":1073560300,"t":1250400309,"p":201,"pt":257,"h":16,"tb":84,"st":"Normal Operation"},"09-2025":{"g":930362800,"t":1101886987,"p":1830,"pt":1980,"h":14,"tb":400,"st":"Normal Operation"},"10-2025":{"g":954518000,"t":1231777415,"p":1390,"pt":2110,"h":390,"tb":510,"st":"Normal Operation"},"11-2025":{"g":938660000,"t":942545790,"p":1460,"pt":1600,"h":250,"tb":690,"st":"Normal Operation"},"12-2025":{"g":1057417000,"t":1159596426,"p":174,"pt":2250,"h":31,"tb":50,"st":"Normal Operation"},"01-2026":{"g":707924000,"t":1187456978,"p":129,"pt":2000,"h":18,"tb":29,"st":"Normal Operation"},"02-2026":{"g":770159000,"t":1077448750,"p":116,"pt":152,"h":12,"tb":38,"st":"Normal Operation"},"03-2026":{"g":1359893000,"t":1445507164,"p":2090,"pt":1950,"h":250,"tb":680,"st":"Normal Operation"},"04-2026":{"g":1006091000,"t":1145435536,"p":135,"pt":1400,"h":21,"tb":56,"st":"Normal Operation"}}},{"id":"SQID00098","n":"Margo City Depok","c":"Jakarta - Bogor Depok (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Wahyu Firman Syah","m":{"06-2025":{"g":617610900,"t":0,"p":980,"pt":0,"h":6,"tb":43,"st":"Normal Operation"},"07-2025":{"g":2452261200,"t":601849824,"p":2530,"pt":1000,"h":410,"tb":201,"st":"Normal Operation"},"08-2025":{"g":943923700,"t":1169186374,"p":160,"pt":186,"h":25,"tb":69,"st":"Normal Operation"},"09-2025":{"g":875701000,"t":1193672631,"p":1230,"pt":1650,"h":21,"tb":490,"st":"Normal Operation"},"10-2025":{"g":1169620700,"t":1354569967,"p":1650,"pt":1730,"h":670,"tb":350,"st":"Normal Operation"},"11-2025":{"g":1192339000,"t":1067581868,"p":1500,"pt":1400,"h":430,"tb":850,"st":"Normal Operation"},"12-2025":{"g":1499661000,"t":1402415247,"p":205,"pt":2200,"h":64,"tb":70,"st":"Normal Operation"},"01-2026":{"g":1138410000,"t":1464265166,"p":150,"pt":2000,"h":30,"tb":68,"st":"Normal Operation"},"02-2026":{"g":1105148000,"t":1300541675,"p":141,"pt":178,"h":26,"tb":39,"st":"Normal Operation"},"03-2026":{"g":2244192000,"t":1698537181,"p":2290,"pt":2100,"h":740,"tb":1440,"st":"Normal Operation"},"04-2026":{"g":1693305000,"t":1639225001,"p":149,"pt":1780,"h":49,"tb":87,"st":"Normal Operation"}}},{"id":"SQID00095","n":"Tangerang City Mall Tangerang","c":"Jakarta - Tangerang (NR)","tp":"Authorized Sail store","p":"PPP REG5","mg":"Nela S Tarigan","m":{"06-2025":{"g":501713800,"t":0,"p":1060,"pt":0,"h":10,"tb":28,"st":"Normal Operation"},"07-2025":{"g":2807597000,"t":1336744176,"p":5230,"pt":2300,"h":610,"tb":217,"st":"Normal Operation"},"08-2025":{"g":1274597200,"t":1665080018,"p":224,"pt":329,"h":25,"tb":103,"st":"Normal Operation"},"09-2025":{"g":1069797100,"t":1268770264,"p":2190,"pt":2120,"h":21,"tb":430,"st":"Normal Operation"},"10-2025":{"g":1452200000,"t":1551036863,"p":2410,"pt":2650,"h":690,"tb":570,"st":"Normal Operation"},"11-2025":{"g":1492605000,"t":1205579722,"p":2000,"pt":2100,"h":520,"tb":920,"st":"Normal Operation"},"12-2025":{"g":1654496000,"t":1674194254,"p":234,"pt":2960,"h":59,"tb":94,"st":"Normal Operation"},"01-2026":{"g":1459015000,"t":1556322774,"p":176,"pt":2200,"h":37,"tb":76,"st":"Normal Operation"},"02-2026":{"g":1367435000,"t":1503475083,"p":198,"pt":200,"h":22,"tb":58,"st":"Normal Operation"},"03-2026":{"g":2365803000,"t":1923145026,"p":3510,"pt":2500,"h":570,"tb":1030,"st":"Normal Operation"},"04-2026":{"g":1943543000,"t":1638452887,"p":231,"pt":1880,"h":58,"tb":90,"st":"Normal Operation"}}},{"id":"SQID00088","n":"Summarecon Mall Serpong Tangerang","c":"Jakarta - Tangerang (NR)","tp":"Authorized Sail store","p":"PPP REG5","mg":"Septiani Dwi Astuti","m":{"06-2025":{"g":351542000,"t":0,"p":600,"pt":0,"h":12,"tb":11,"st":"Normal Operation"},"07-2025":{"g":3985287300,"t":1515936527,"p":6980,"pt":2500,"h":1230,"tb":199,"st":"Normal Operation"},"08-2025":{"g":2054576800,"t":2435432967,"p":379,"pt":392,"h":38,"tb":115,"st":"Normal Operation"},"09-2025":{"g":1486149300,"t":1962093108,"p":2460,"pt":3290,"h":44,"tb":540,"st":"Normal Operation"},"10-2025":{"g":3089125000,"t":3554160433,"p":3980,"pt":4890,"h":2000,"tb":820,"st":"Normal Operation"},"11-2025":{"g":2528584000,"t":2411419005,"p":3350,"pt":3410,"h":740,"tb":960,"st":"Normal Operation"},"12-2025":{"g":2643272000,"t":2807874031,"p":305,"pt":4800,"h":104,"tb":120,"st":"Normal Operation"},"01-2026":{"g":2166989000,"t":2606910856,"p":249,"pt":3300,"h":55,"tb":86,"st":"Normal Operation"},"02-2026":{"g":2021041000,"t":2422781152,"p":225,"pt":330,"h":42,"tb":78,"st":"Normal Operation"},"03-2026":{"g":3319936000,"t":2916289635,"p":3100,"pt":3800,"h":1000,"tb":1450,"st":"Normal Operation"},"04-2026":{"g":2556148000,"t":2645559939,"p":231,"pt":2670,"h":57,"tb":98,"st":"Normal Operation"}}},{"id":"SQID00080","n":"Mall Artha Gading Jakarta","c":"Jakarta - North West Central (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Lidia Wahyuningsih","m":{"06-2025":{"g":314628600,"t":0,"p":490,"pt":0,"h":7,"tb":8,"st":"Normal Operation"},"07-2025":{"g":1019388100,"t":756690992,"p":2070,"pt":1260,"h":180,"tb":50,"st":"Normal Operation"},"08-2025":{"g":626999900,"t":652805101,"p":91,"pt":125,"h":19,"tb":38,"st":"Normal Operation"},"09-2025":{"g":501176200,"t":602028077,"p":640,"pt":970,"h":10,"tb":220,"st":"Normal Operation"},"10-2025":{"g":666498000,"t":750450532,"p":880,"pt":910,"h":310,"tb":280,"st":"Normal Operation"},"11-2025":{"g":672740000,"t":595768995,"p":770,"pt":780,"h":230,"tb":340,"st":"Normal Operation"},"12-2025":{"g":840659000,"t":786314067,"p":122,"pt":1150,"h":25,"tb":52,"st":"Normal Operation"},"01-2026":{"g":603150000,"t":806447915,"p":81,"pt":1150,"h":15,"tb":26,"st":"Normal Operation"},"02-2026":{"g":591181000,"t":750312500,"p":84,"pt":105,"h":12,"tb":19,"st":"Normal Operation"},"03-2026":{"g":1168353000,"t":957761081,"p":1200,"pt":1210,"h":250,"tb":660,"st":"Normal Operation"},"04-2026":{"g":847353000,"t":834862512,"p":89,"pt":850,"h":16,"tb":41,"st":"Normal Operation"}}},{"id":"SQID00074","n":"Pakuwon Mall Bekasi","c":"Jakarta - Bekasi (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Indra Gunawan","m":{"06-2025":{"g":465310400,"t":0,"p":740,"pt":0,"h":11,"tb":29,"st":"Normal Operation"},"07-2025":{"g":1406550600,"t":905282302,"p":1860,"pt":1510,"h":280,"tb":113,"st":"Normal Operation"},"08-2025":{"g":856137300,"t":934505602,"p":135,"pt":142,"h":18,"tb":70,"st":"Normal Operation"},"09-2025":{"g":555975500,"t":723443753,"p":760,"pt":970,"h":14,"tb":260,"st":"Normal Operation"},"10-2025":{"g":1079000000,"t":873374556,"p":1270,"pt":1150,"h":510,"tb":420,"st":"Normal Operation"},"11-2025":{"g":1140787000,"t":875018475,"p":1130,"pt":1090,"h":480,"tb":730,"st":"Normal Operation"},"12-2025":{"g":1281774000,"t":1199745428,"p":147,"pt":1560,"h":48,"tb":69,"st":"Normal Operation"},"01-2026":{"g":1171025000,"t":1104844639,"p":117,"pt":1570,"h":31,"tb":62,"st":"Normal Operation"},"02-2026":{"g":809035000,"t":1201146397,"p":98,"pt":165,"h":14,"tb":31,"st":"Normal Operation"},"03-2026":{"g":1596942000,"t":1386971425,"p":1490,"pt":1900,"h":450,"tb":790,"st":"Normal Operation"},"04-2026":{"g":1322969000,"t":1338935883,"p":122,"pt":1300,"h":39,"tb":64,"st":"Normal Operation"}}},{"id":"SQID00072","n":"Erajaya Digital Complex PIK","c":"Jakarta - Tangerang (NR)","tp":"Authorized Sail store","p":"Unknown","mg":"-","m":{"06-2025":{"g":272962600,"t":0,"p":280,"pt":0,"h":9,"tb":7,"st":"Store Closure Process"},"07-2025":{"g":1433322500,"t":704863163,"p":3980,"pt":1170,"h":280,"tb":46,"st":"Store Closure Process"},"08-2025":{"g":739416600,"t":888460351,"p":103,"pt":266,"h":23,"tb":42,"st":"Store Closure Process"},"09-2025":{"g":447949800,"t":801356180,"p":690,"pt":1470,"h":10,"tb":190,"st":"Store Closure Process"},"10-2025":{"g":460474000,"t":833818377,"p":610,"pt":1080,"h":240,"tb":250,"st":"Store Closure Process"},"11-2025":{"g":324475000,"t":502508160,"p":510,"pt":660,"h":90,"tb":130,"st":"Store Closure Process"},"12-2025":{"g":516430000,"t":480329873,"p":155,"pt":830,"h":12,"tb":17,"st":"Store Closure Process"},"01-2026":{"g":280368000,"t":567125396,"p":43,"pt":1960,"h":4,"tb":6,"st":"Store Closure Process"},"02-2026":{"g":335790000,"t":500208325,"p":38,"pt":70,"h":11,"tb":4,"st":"Store Closure Process"},"03-2026":{"g":336951000,"t":0,"p":490,"pt":0,"h":80,"tb":160,"st":"Store Closure Process"},"04-2026":{"g":409269000,"t":200604399,"p":81,"pt":200,"h":5,"tb":5,"st":"Store Closure Process"}}},{"id":"SQID00069","n":"Cipinang Indah Mall Jakarta","c":"Jakarta - South East (NR)","tp":"Authorized Sail store","p":"Unknown","mg":"-","m":{"06-2025":{"g":595593900,"t":0,"p":880,"pt":0,"h":13,"tb":29,"st":"Store Closure Process"},"07-2025":{"g":769592100,"t":727946589,"p":1400,"pt":1210,"h":180,"tb":52,"st":"Store Closure Process"},"08-2025":{"g":472279300,"t":645083333,"p":83,"pt":113,"h":5,"tb":34,"st":"Store Closure Process"},"09-2025":{"g":356593600,"t":602938312,"p":620,"pt":970,"h":5,"tb":230,"st":"Store Closure Process"},"10-2025":{"g":675565000,"t":698345183,"p":940,"pt":1020,"h":320,"tb":300,"st":"Store Closure Process"},"11-2025":{"g":563030000,"t":508586962,"p":880,"pt":790,"h":200,"tb":180,"st":"Store Closure Process"},"12-2025":{"g":607641000,"t":711922879,"p":88,"pt":1260,"h":15,"tb":23,"st":"Store Closure Process"},"01-2026":{"g":307681000,"t":734690982,"p":38,"pt":1260,"h":6,"tb":14,"st":"Store Closure Process"},"02-2026":{"g":0,"t":666277500,"p":0,"pt":94,"h":0,"tb":0,"st":"Store Closure Process"}}},{"id":"SQID00065","n":"Metropolitan Mall Cileungsi Bogor","c":"Jakarta - Bekasi (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"A Nugraha","m":{"06-2025":{"g":140837000,"t":0,"p":360,"pt":0,"h":3,"tb":1,"st":"Normal Operation"},"07-2025":{"g":1932305200,"t":1197703836,"p":3670,"pt":2000,"h":390,"tb":129,"st":"Normal Operation"},"08-2025":{"g":707917300,"t":1119418745,"p":140,"pt":233,"h":10,"tb":47,"st":"Normal Operation"},"09-2025":{"g":710097700,"t":879366710,"p":1350,"pt":1530,"h":13,"tb":440,"st":"Normal Operation"},"10-2025":{"g":938885000,"t":906110101,"p":1470,"pt":1520,"h":380,"tb":520,"st":"Normal Operation"},"11-2025":{"g":820985000,"t":753748335,"p":1360,"pt":1300,"h":220,"tb":610,"st":"Normal Operation"},"12-2025":{"g":942760000,"t":1034881200,"p":146,"pt":2060,"h":29,"tb":53,"st":"Normal Operation"},"01-2026":{"g":911718000,"t":994153464,"p":147,"pt":1550,"h":20,"tb":55,"st":"Normal Operation"},"02-2026":{"g":702809000,"t":925343719,"p":112,"pt":130,"h":6,"tb":51,"st":"Normal Operation"},"03-2026":{"g":1288866000,"t":1287902053,"p":1810,"pt":1580,"h":240,"tb":860,"st":"Normal Operation"},"04-2026":{"g":962004000,"t":1036822167,"p":131,"pt":1250,"h":17,"tb":61,"st":"Normal Operation"}}},{"id":"SQID00064","n":"Cilegon Center Mall Cilegon","c":"Jakarta - Banten (NR)","tp":"Authorized Sail store","p":"PPP REG5","mg":"Cynthia Apriliani","m":{"06-2025":{"g":388649800,"t":0,"p":660,"pt":0,"h":8,"tb":38,"st":"Normal Operation"},"07-2025":{"g":1356412600,"t":1073494004,"p":2640,"pt":1790,"h":340,"tb":92,"st":"Normal Operation"},"08-2025":{"g":922024300,"t":1080968253,"p":146,"pt":173,"h":21,"tb":60,"st":"Normal Operation"},"09-2025":{"g":754102200,"t":843557791,"p":1250,"pt":1370,"h":18,"tb":460,"st":"Normal Operation"},"10-2025":{"g":995815000,"t":1089013343,"p":1350,"pt":1540,"h":400,"tb":480,"st":"Normal Operation"},"11-2025":{"g":878617000,"t":915697552,"p":1110,"pt":1350,"h":200,"tb":560,"st":"Normal Operation"},"12-2025":{"g":1240751000,"t":1055799817,"p":169,"pt":1680,"h":39,"tb":77,"st":"Normal Operation"},"01-2026":{"g":890681000,"t":1154778625,"p":124,"pt":1680,"h":17,"tb":41,"st":"Normal Operation"},"02-2026":{"g":1005603000,"t":1094823562,"p":143,"pt":151,"h":23,"tb":38,"st":"Normal Operation"},"03-2026":{"g":1623798000,"t":1202870587,"p":1640,"pt":1740,"h":340,"tb":1040,"st":"Normal Operation"},"04-2026":{"g":1242930000,"t":1231137325,"p":148,"pt":1250,"h":31,"tb":65,"st":"Normal Operation"}}},{"id":"SQID00063","n":"AEON Mall Tanjung Barat Jakarta","c":"Jakarta - South East (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Alisa Wulandari","m":{"06-2025":{"g":320407700,"t":0,"p":240,"pt":0,"h":4,"tb":32,"st":"Normal Operation"},"07-2025":{"g":1581769800,"t":1120734341,"p":2740,"pt":1870,"h":450,"tb":100,"st":"Normal Operation"},"08-2025":{"g":634353500,"t":1124674543,"p":91,"pt":161,"h":11,"tb":47,"st":"Normal Operation"},"09-2025":{"g":744761700,"t":751504103,"p":1010,"pt":1130,"h":14,"tb":340,"st":"Normal Operation"},"10-2025":{"g":1037244000,"t":1024101489,"p":1460,"pt":1250,"h":570,"tb":350,"st":"Normal Operation"},"11-2025":{"g":1134131000,"t":842941958,"p":1080,"pt":1150,"h":340,"tb":800,"st":"Normal Operation"},"12-2025":{"g":1179595000,"t":1200512708,"p":127,"pt":1640,"h":53,"tb":60,"st":"Normal Operation"},"01-2026":{"g":852431000,"t":1193340137,"p":86,"pt":1500,"h":19,"tb":37,"st":"Normal Operation"},"02-2026":{"g":770545000,"t":1080450000,"p":103,"pt":144,"h":22,"tb":34,"st":"Normal Operation"},"03-2026":{"g":1625541000,"t":1367741666,"p":1800,"pt":1660,"h":500,"tb":830,"st":"Normal Operation"},"04-2026":{"g":1166267000,"t":1209792423,"p":131,"pt":1300,"h":34,"tb":54,"st":"Normal Operation"}}},{"id":"SQID00061","n":"Grand Metropolitan Mall Bekasi","c":"Jakarta - Bekasi (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Reski Pauzan","m":{"06-2025":{"g":70663900,"t":0,"p":110,"pt":0,"h":0,"tb":2,"st":"Normal Operation"},"07-2025":{"g":865806900,"t":651169714,"p":1200,"pt":1080,"h":230,"tb":48,"st":"Normal Operation"},"08-2025":{"g":600902500,"t":569928493,"p":59,"pt":80,"h":9,"tb":100,"st":"Normal Operation"},"09-2025":{"g":342903600,"t":662137484,"p":430,"pt":970,"h":5,"tb":140,"st":"Normal Operation"},"10-2025":{"g":525007000,"t":838805846,"p":780,"pt":920,"h":210,"tb":150,"st":"Normal Operation"},"11-2025":{"g":412120000,"t":506730645,"p":350,"pt":650,"h":20,"tb":320,"st":"Normal Operation"},"12-2025":{"g":769862000,"t":420534958,"p":77,"pt":590,"h":21,"tb":32,"st":"Normal Operation"},"01-2026":{"g":363394000,"t":762069927,"p":44,"pt":900,"h":6,"tb":18,"st":"Normal Operation"},"02-2026":{"g":376249000,"t":700291675,"p":43,"pt":96,"h":6,"tb":12,"st":"Normal Operation"},"03-2026":{"g":763188000,"t":891624468,"p":1030,"pt":1100,"h":190,"tb":210,"st":"Normal Operation"},"04-2026":{"g":410778000,"t":468650024,"p":36,"pt":460,"h":11,"tb":17,"st":"Normal Operation"}}},{"id":"SQID00051","n":"Emporium Pluit Mall Jakarta","c":"Jakarta - North West Central (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Anisah","m":{"06-2025":{"g":747750600,"t":0,"p":1170,"pt":0,"h":29,"tb":25,"st":"Normal Operation"},"07-2025":{"g":1882758700,"t":1758748041,"p":3080,"pt":2930,"h":440,"tb":81,"st":"Normal Operation"},"08-2025":{"g":1034075100,"t":1387101782,"p":171,"pt":247,"h":22,"tb":41,"st":"Normal Operation"},"09-2025":{"g":918617500,"t":1024270444,"p":1940,"pt":1560,"h":19,"tb":290,"st":"Normal Operation"},"10-2025":{"g":1711802000,"t":1674508721,"p":2510,"pt":2690,"h":950,"tb":300,"st":"Normal Operation"},"11-2025":{"g":1134009000,"t":1376365568,"p":1550,"pt":2280,"h":390,"tb":490,"st":"Normal Operation"},"12-2025":{"g":1324030000,"t":1558258733,"p":163,"pt":2840,"h":49,"tb":46,"st":"Normal Operation"},"01-2026":{"g":1322809000,"t":1275393464,"p":179,"pt":1800,"h":36,"tb":41,"st":"Normal Operation"},"02-2026":{"g":1361933000,"t":1267513327,"p":174,"pt":175,"h":26,"tb":59,"st":"Normal Operation"},"03-2026":{"g":2093964000,"t":1775320998,"p":1870,"pt":2010,"h":640,"tb":690,"st":"Normal Operation"},"04-2026":{"g":1890964000,"t":1677490258,"p":251,"pt":1650,"h":41,"tb":69,"st":"Normal Operation"}}},{"id":"SQID00050","n":"Mall Kelapa Gading Jakarta","c":"Jakarta - Bekasi (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Ahmad Fajar Dewantara","m":{"06-2025":{"g":295148700,"t":0,"p":360,"pt":0,"h":4,"tb":24,"st":"Normal Operation"},"07-2025":{"g":2594252800,"t":1648332741,"p":3770,"pt":2750,"h":750,"tb":139,"st":"Normal Operation"},"08-2025":{"g":1515295900,"t":1553688635,"p":269,"pt":190,"h":20,"tb":68,"st":"Normal Operation"},"09-2025":{"g":853397000,"t":1282227872,"p":1430,"pt":1940,"h":16,"tb":390,"st":"Normal Operation"},"10-2025":{"g":1418451000,"t":1757513205,"p":1890,"pt":2640,"h":700,"tb":390,"st":"Normal Operation"},"11-2025":{"g":1270842000,"t":1277922802,"p":1590,"pt":1790,"h":480,"tb":680,"st":"Normal Operation"},"12-2025":{"g":1291080000,"t":1529912037,"p":151,"pt":2350,"h":49,"tb":58,"st":"Normal Operation"},"01-2026":{"g":1044827000,"t":1435523217,"p":119,"pt":1800,"h":31,"tb":45,"st":"Normal Operation"},"02-2026":{"g":910894000,"t":1302842625,"p":107,"pt":180,"h":18,"tb":44,"st":"Normal Operation"},"03-2026":{"g":2108739000,"t":1470924826,"p":3190,"pt":2110,"h":480,"tb":640,"st":"Normal Operation"},"04-2026":{"g":1553125000,"t":1526970010,"p":180,"pt":1800,"h":39,"tb":53,"st":"Normal Operation"}}},{"id":"SQID00037","n":"E-Center Supermall Karawaci","c":"Jakarta - Tangerang (NR)","tp":"Authorized Sail store","p":"PPP REG5","mg":"Suci Nayla Hanifah","m":{"06-2025":{"g":570469000,"t":0,"p":1000,"pt":0,"h":11,"tb":48,"st":"Normal Operation"},"07-2025":{"g":1861399600,"t":1465743599,"p":2920,"pt":2440,"h":540,"tb":145,"st":"Normal Operation"},"08-2025":{"g":1170653300,"t":1384739487,"p":164,"pt":217,"h":28,"tb":88,"st":"Normal Operation"},"09-2025":{"g":875060900,"t":1053081510,"p":1380,"pt":1500,"h":19,"tb":700,"st":"Normal Operation"},"10-2025":{"g":1168029000,"t":1368279764,"p":1530,"pt":1840,"h":600,"tb":380,"st":"Normal Operation"},"11-2025":{"g":984527000,"t":1109338582,"p":1360,"pt":1480,"h":330,"tb":550,"st":"Normal Operation"},"12-2025":{"g":1118864000,"t":1138905059,"p":146,"pt":2040,"h":37,"tb":75,"st":"Normal Operation"},"01-2026":{"g":973805000,"t":1101221391,"p":135,"pt":1400,"h":23,"tb":68,"st":"Normal Operation"},"02-2026":{"g":840606000,"t":999416250,"p":111,"pt":138,"h":21,"tb":32,"st":"Normal Operation"},"03-2026":{"g":1624363000,"t":1424944071,"p":1740,"pt":1700,"h":380,"tb":910,"st":"Normal Operation"},"04-2026":{"g":1313489000,"t":1358676556,"p":145,"pt":1450,"h":39,"tb":60,"st":"Normal Operation"}}},{"id":"SQID00035","n":"Bintaro Jaya Xchange Mall 1 Tangerang Selatan","c":"Jakarta - Banten (NR)","tp":"Authorized Sail store","p":"PPP REG5","mg":"Mentari Rizki","m":{"06-2025":{"g":263450900,"t":0,"p":460,"pt":0,"h":8,"tb":13,"st":"Normal Operation"},"07-2025":{"g":4085347700,"t":2380895666,"p":5390,"pt":3970,"h":850,"tb":296,"st":"Normal Operation"},"08-2025":{"g":2468332300,"t":2580143467,"p":261,"pt":343,"h":32,"tb":159,"st":"Normal Operation"},"09-2025":{"g":1697123100,"t":2485854360,"p":2610,"pt":2680,"h":46,"tb":930,"st":"Normal Operation"},"10-2025":{"g":1825758000,"t":2640103833,"p":2430,"pt":3230,"h":950,"tb":770,"st":"Normal Operation"},"11-2025":{"g":1520922000,"t":1964509988,"p":1640,"pt":2480,"h":450,"tb":1070,"st":"Normal Operation"},"12-2025":{"g":1621443000,"t":2171061553,"p":177,"pt":3180,"h":56,"tb":75,"st":"Normal Operation"},"01-2026":{"g":1676137000,"t":1872730616,"p":198,"pt":2200,"h":40,"tb":85,"st":"Normal Operation"},"02-2026":{"g":1404452000,"t":1700708325,"p":177,"pt":233,"h":32,"tb":45,"st":"Normal Operation"},"03-2026":{"g":2481592000,"t":2443077723,"p":2620,"pt":2800,"h":640,"tb":1210,"st":"Normal Operation"},"04-2026":{"g":2020946000,"t":2015396442,"p":193,"pt":2100,"h":35,"tb":101,"st":"Normal Operation"}}},{"id":"SQID00032","n":"The Park Sawangan Depok","c":"Jakarta - Bogor Depok (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Adam Yusuf","m":{"06-2025":{"g":486475900,"t":0,"p":880,"pt":0,"h":16,"tb":28,"st":"Normal Operation"},"07-2025":{"g":1712663800,"t":1164434068,"p":2360,"pt":1940,"h":360,"tb":130,"st":"Normal Operation"},"08-2025":{"g":833774800,"t":1143282310,"p":149,"pt":189,"h":15,"tb":51,"st":"Normal Operation"},"09-2025":{"g":694368100,"t":896015543,"p":1020,"pt":1360,"h":14,"tb":340,"st":"Normal Operation"},"10-2025":{"g":1010539000,"t":1057415574,"p":1380,"pt":1520,"h":440,"tb":440,"st":"Normal Operation"},"11-2025":{"g":862799000,"t":864879412,"p":970,"pt":1220,"h":210,"tb":520,"st":"Normal Operation"},"12-2025":{"g":960191000,"t":1085026361,"p":113,"pt":1580,"h":33,"tb":66,"st":"Normal Operation"},"01-2026":{"g":869574000,"t":1075287892,"p":98,"pt":1500,"h":18,"tb":53,"st":"Normal Operation"},"02-2026":{"g":948718000,"t":976406675,"p":91,"pt":137,"h":12,"tb":40,"st":"Normal Operation"},"03-2026":{"g":1370877000,"t":1093943627,"p":1680,"pt":1580,"h":260,"tb":710,"st":"Normal Operation"},"04-2026":{"g":1105633000,"t":1068842791,"p":114,"pt":1080,"h":28,"tb":52,"st":"Normal Operation"}}},{"id":"SQID00031","n":"AEON Mall Jakarta Garden City Jakarta","c":"Jakarta - Bekasi (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Theresia Ade Juntasari, S.A.B","m":{"06-2025":{"g":1011424100,"t":0,"p":1630,"pt":0,"h":20,"tb":76,"st":"Normal Operation"},"07-2025":{"g":1290708700,"t":1130784782,"p":2130,"pt":1880,"h":290,"tb":70,"st":"Normal Operation"},"08-2025":{"g":602183900,"t":1030188186,"p":94,"pt":178,"h":12,"tb":45,"st":"Normal Operation"},"09-2025":{"g":765680900,"t":753616204,"p":1040,"pt":1160,"h":16,"tb":450,"st":"Normal Operation"},"10-2025":{"g":894958900,"t":1106177304,"p":1320,"pt":1380,"h":500,"tb":320,"st":"Normal Operation"},"11-2025":{"g":767167000,"t":748170112,"p":790,"pt":1110,"h":220,"tb":570,"st":"Normal Operation"},"12-2025":{"g":881788000,"t":893855983,"p":113,"pt":1310,"h":31,"tb":53,"st":"Normal Operation"},"01-2026":{"g":689088000,"t":888325671,"p":89,"pt":1100,"h":10,"tb":46,"st":"Normal Operation"},"02-2026":{"g":642422000,"t":800333325,"p":88,"pt":112,"h":10,"tb":31,"st":"Normal Operation"},"03-2026":{"g":1281753000,"t":1188832657,"p":1870,"pt":1450,"h":270,"tb":650,"st":"Normal Operation"},"04-2026":{"g":1079558000,"t":945682369,"p":129,"pt":1020,"h":31,"tb":52,"st":"Normal Operation"}}},{"id":"SQID00030","n":"AEON Mall BSD City Tangerang","c":"Jakarta - Banten (NR)","tp":"Authorized Sail store","p":"PPP REG5","mg":"Yosep Harry Kristian Silaen, S.E","m":{"06-2025":{"g":1466462800,"t":0,"p":2110,"pt":0,"h":39,"tb":73,"st":"Normal Operation"},"07-2025":{"g":1812024500,"t":1743853101,"p":2770,"pt":2910,"h":560,"tb":98,"st":"Normal Operation"},"08-2025":{"g":1345225500,"t":1731362533,"p":198,"pt":271,"h":25,"tb":99,"st":"Normal Operation"},"09-2025":{"g":1132527000,"t":1218601504,"p":1680,"pt":1810,"h":22,"tb":630,"st":"Normal Operation"},"10-2025":{"g":1463205000,"t":1737414617,"p":2130,"pt":2260,"h":800,"tb":390,"st":"Normal Operation"},"11-2025":{"g":1233124000,"t":1264497525,"p":1630,"pt":1830,"h":380,"tb":830,"st":"Normal Operation"},"12-2025":{"g":1394569000,"t":1506159429,"p":193,"pt":2490,"h":49,"tb":71,"st":"Normal Operation"},"01-2026":{"g":1309730000,"t":1418716593,"p":157,"pt":2000,"h":34,"tb":72,"st":"Normal Operation"},"02-2026":{"g":1264905000,"t":1345495406,"p":167,"pt":188,"h":37,"tb":47,"st":"Normal Operation"},"03-2026":{"g":2247416000,"t":1588829610,"p":2250,"pt":2160,"h":640,"tb":1020,"st":"Normal Operation"},"04-2026":{"g":1768023000,"t":1701942243,"p":162,"pt":1700,"h":51,"tb":79,"st":"Normal Operation"}}},{"id":"SQID00028","n":"Living World Alam Sutera Tangerang Selatan","c":"Jakarta - Tangerang (NR)","tp":"Authorized Sail store","p":"PPP REG5","mg":"Alya Yuniza Maharani Zain","m":{"06-2025":{"g":278870700,"t":0,"p":320,"pt":0,"h":5,"tb":17,"st":"Normal Operation"},"07-2025":{"g":1477134900,"t":1053589363,"p":2110,"pt":1760,"h":390,"tb":82,"st":"Normal Operation"},"08-2025":{"g":920301500,"t":1058944551,"p":141,"pt":141,"h":15,"tb":71,"st":"Normal Operation"},"09-2025":{"g":896573300,"t":825376259,"p":1190,"pt":1160,"h":22,"tb":400,"st":"Normal Operation"},"10-2025":{"g":1145448000,"t":1269878853,"p":1320,"pt":1630,"h":620,"tb":360,"st":"Normal Operation"},"11-2025":{"g":982127000,"t":913410180,"p":1050,"pt":1220,"h":320,"tb":520,"st":"Normal Operation"},"12-2025":{"g":1270660000,"t":1172371126,"p":147,"pt":1640,"h":48,"tb":54,"st":"Normal Operation"},"01-2026":{"g":968308000,"t":1242568356,"p":101,"pt":1500,"h":16,"tb":44,"st":"Normal Operation"},"02-2026":{"g":872878000,"t":1127469575,"p":100,"pt":157,"h":19,"tb":26,"st":"Normal Operation"},"03-2026":{"g":1504839000,"t":1088217741,"p":1550,"pt":1440,"h":400,"tb":530,"st":"Normal Operation"},"04-2026":{"g":1084662000,"t":1162923911,"p":87,"pt":1150,"h":25,"tb":56,"st":"Normal Operation"}}},{"id":"SQID00025","n":"Summarecon Mall Bekasi","c":"Jakarta - Bekasi (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Mohammad Rizaldi","m":{"06-2025":{"g":771919300,"t":0,"p":850,"pt":0,"h":9,"tb":100,"st":"Normal Operation"},"07-2025":{"g":2897058600,"t":1949806002,"p":4700,"pt":3250,"h":690,"tb":195,"st":"Normal Operation"},"08-2025":{"g":1794124400,"t":1919711021,"p":272,"pt":292,"h":30,"tb":132,"st":"Normal Operation"},"09-2025":{"g":1095399800,"t":1443416144,"p":1520,"pt":2160,"h":16,"tb":490,"st":"Normal Operation"},"10-2025":{"g":2454410000,"t":3727559770,"p":2840,"pt":4410,"h":1820,"tb":590,"st":"Normal Operation"},"11-2025":{"g":1948266000,"t":2073977100,"p":1800,"pt":2510,"h":690,"tb":1170,"st":"Normal Operation"},"12-2025":{"g":1836237000,"t":2418174574,"p":177,"pt":2840,"h":68,"tb":125,"st":"Normal Operation"},"01-2026":{"g":1787276000,"t":1830385048,"p":196,"pt":1900,"h":57,"tb":100,"st":"Normal Operation"},"02-2026":{"g":1902767000,"t":1677062317,"p":216,"pt":235,"h":43,"tb":91,"st":"Normal Operation"},"03-2026":{"g":2920183000,"t":2427200000,"p":3020,"pt":2890,"h":910,"tb":1460,"st":"Normal Operation"},"04-2026":{"g":1794282000,"t":2270435271,"p":180,"pt":2400,"h":41,"tb":79,"st":"Normal Operation"}}},{"id":"SQID00022","n":"Cibinong City Mall Cibinong","c":"Jakarta - Bogor Depok (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Abd.Malik Fajar","m":{"06-2025":{"g":141655000,"t":0,"p":290,"pt":0,"h":5,"tb":6,"st":"Normal Operation"},"07-2025":{"g":2127709400,"t":1423243804,"p":4370,"pt":2370,"h":500,"tb":133,"st":"Normal Operation"},"08-2025":{"g":915134100,"t":1372163536,"p":176,"pt":246,"h":18,"tb":66,"st":"Normal Operation"},"09-2025":{"g":830333100,"t":1214324593,"p":1610,"pt":2400,"h":12,"tb":480,"st":"Normal Operation"},"10-2025":{"g":1271918000,"t":1191202995,"p":1950,"pt":2020,"h":580,"tb":760,"st":"Normal Operation"},"11-2025":{"g":933746000,"t":1074571448,"p":1480,"pt":1800,"h":180,"tb":990,"st":"Normal Operation"},"12-2025":{"g":1056713000,"t":1291182069,"p":164,"pt":2560,"h":27,"tb":78,"st":"Normal Operation"},"01-2026":{"g":927866000,"t":1229218509,"p":115,"pt":2100,"h":23,"tb":59,"st":"Normal Operation"},"02-2026":{"g":817847000,"t":1115464575,"p":119,"pt":158,"h":18,"tb":47,"st":"Normal Operation"},"03-2026":{"g":1415766000,"t":1279166148,"p":1870,"pt":1820,"h":370,"tb":690,"st":"Normal Operation"},"04-2026":{"g":872970000,"t":1129132293,"p":109,"pt":1300,"h":21,"tb":53,"st":"Normal Operation"}}},{"id":"SQID00020","n":"Trans Studio Mall Cibubur Depok","c":"Jakarta - Bogor Depok (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Arief Ardiansyah","m":{"06-2025":{"g":326400800,"t":0,"p":450,"pt":0,"h":6,"tb":15,"st":"Normal Operation"},"07-2025":{"g":1040807400,"t":958163119,"p":1320,"pt":1600,"h":210,"tb":72,"st":"Normal Operation"},"08-2025":{"g":685354100,"t":901181723,"p":80,"pt":119,"h":6,"tb":46,"st":"Normal Operation"},"09-2025":{"g":464168700,"t":732224475,"p":640,"pt":970,"h":10,"tb":270,"st":"Normal Operation"},"10-2025":{"g":1004608000,"t":913973031,"p":1480,"pt":1090,"h":440,"tb":330,"st":"Normal Operation"},"11-2025":{"g":603514000,"t":750615075,"p":600,"pt":1240,"h":190,"tb":350,"st":"Normal Operation"},"12-2025":{"g":869689000,"t":752467244,"p":89,"pt":1160,"h":31,"tb":55,"st":"Normal Operation"},"01-2026":{"g":711891000,"t":873850169,"p":67,"pt":1000,"h":16,"tb":58,"st":"Normal Operation"},"02-2026":{"g":558905000,"t":801192091,"p":61,"pt":112,"h":10,"tb":31,"st":"Normal Operation"},"03-2026":{"g":1217400000,"t":990834909,"p":1450,"pt":1290,"h":250,"tb":540,"st":"Normal Operation"},"04-2026":{"g":656640000,"t":925322623,"p":79,"pt":990,"h":24,"tb":17,"st":"Normal Operation"}}},{"id":"SQID00018","n":"Botani Square Mall Bogor","c":"Jakarta - Bogor Depok (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Muhamad Robiusani Muhyi","m":{"06-2025":{"g":219375800,"t":0,"p":380,"pt":0,"h":2,"tb":12,"st":"Normal Operation"},"07-2025":{"g":2088234800,"t":1523913093,"p":3050,"pt":2540,"h":420,"tb":160,"st":"Normal Operation"},"08-2025":{"g":1204488300,"t":1435537378,"p":149,"pt":220,"h":29,"tb":85,"st":"Normal Operation"},"09-2025":{"g":798741000,"t":1171516198,"p":1070,"pt":1580,"h":16,"tb":500,"st":"Normal Operation"},"10-2025":{"g":1277434000,"t":1440930469,"p":1540,"pt":1740,"h":640,"tb":510,"st":"Normal Operation"},"11-2025":{"g":1064860000,"t":1132184498,"p":1010,"pt":1440,"h":390,"tb":950,"st":"Normal Operation"},"12-2025":{"g":1187760000,"t":1403294767,"p":128,"pt":1840,"h":47,"tb":79,"st":"Normal Operation"},"01-2026":{"g":1160315000,"t":1361480471,"p":104,"pt":1500,"h":28,"tb":68,"st":"Normal Operation"},"02-2026":{"g":1015584000,"t":1236214875,"p":104,"pt":172,"h":17,"tb":42,"st":"Normal Operation"},"03-2026":{"g":1650845000,"t":1347061485,"p":1860,"pt":1980,"h":430,"tb":750,"st":"Normal Operation"},"04-2026":{"g":1340608000,"t":1376943123,"p":121,"pt":1340,"h":33,"tb":63,"st":"Normal Operation"}}},{"id":"SQID00015","n":"Lippo Mall ST Moritz Jakarta","c":"Jakarta - North West Central (NR)","tp":"Authorized Sail store","p":"PPP REG5","mg":"Rizqi Juniardi","m":{"06-2025":{"g":642508000,"t":0,"p":1100,"pt":0,"h":29,"tb":27,"st":"Normal Operation"},"07-2025":{"g":2131900600,"t":1667647528,"p":3100,"pt":2780,"h":680,"tb":132,"st":"Normal Operation"},"08-2025":{"g":1127474500,"t":1554052290,"p":156,"pt":223,"h":29,"tb":74,"st":"Normal Operation"},"09-2025":{"g":1038954400,"t":1148081784,"p":1520,"pt":1520,"h":24,"tb":540,"st":"Normal Operation"},"10-2025":{"g":1455885000,"t":1639309790,"p":1930,"pt":2110,"h":910,"tb":540,"st":"Normal Operation"},"11-2025":{"g":1226511000,"t":1274024768,"p":1270,"pt":1690,"h":440,"tb":730,"st":"Normal Operation"},"12-2025":{"g":1414683000,"t":1581970004,"p":166,"pt":2170,"h":53,"tb":72,"st":"Normal Operation"},"01-2026":{"g":1003436000,"t":1614354357,"p":103,"pt":2000,"h":21,"tb":49,"st":"Normal Operation"},"02-2026":{"g":926498000,"t":1465610425,"p":126,"pt":204,"h":25,"tb":22,"st":"Normal Operation"},"03-2026":{"g":2056413000,"t":1844763578,"p":2090,"pt":2350,"h":640,"tb":650,"st":"Normal Operation"},"04-2026":{"g":1257519000,"t":1303502585,"p":137,"pt":1300,"h":48,"tb":49,"st":"Normal Operation"}}},{"id":"SQID00118","n":"Mall Jakarta Tower Kemayoran Jakarta Pusat","c":"Jakarta - North West Central (NR)","tp":"New authorized store","p":"PPP REG5","mg":"Agis Somantri","m":{"11-2025":{"g":199242000,"t":0,"p":350,"pt":0,"h":50,"tb":50,"st":"Normal Operation"},"12-2025":{"g":472676000,"t":175852500,"p":38,"pt":250,"h":14,"tb":33,"st":"Normal Operation"},"01-2026":{"g":288414000,"t":348364431,"p":23,"pt":370,"h":5,"tb":18,"st":"Normal Operation"},"02-2026":{"g":294896000,"t":380158325,"p":40,"pt":52,"h":5,"tb":8,"st":"Normal Operation"},"03-2026":{"g":512449000,"t":585346513,"p":720,"pt":750,"h":120,"tb":340,"st":"Normal Operation"},"04-2026":{"g":562613000,"t":353289861,"p":81,"pt":380,"h":14,"tb":13,"st":"Normal Operation"}}},{"id":"SQID00182","n":"Green Pramuka Square Mall Jakarta","c":"Jakarta - North West Central (NR)","tp":"New authorized store","p":"Telling","mg":"Bintang Syahira Feranda Putra","m":{"12-2025":{"g":153246000,"t":175852500,"p":12,"pt":250,"h":3,"tb":13,"st":"Normal Operation"},"01-2026":{"g":526059000,"t":496169563,"p":54,"pt":710,"h":15,"tb":18,"st":"Normal Operation"},"02-2026":{"g":491516000,"t":450187500,"p":52,"pt":65,"h":7,"tb":32,"st":"Normal Operation"},"03-2026":{"g":1103259000,"t":760299963,"p":1140,"pt":800,"h":290,"tb":400,"st":"Normal Operation"},"04-2026":{"g":1041178000,"t":862114029,"p":87,"pt":760,"h":33,"tb":49,"st":"Normal Operation"}}},{"id":"SQID00181","n":"Gajah Mada Plaza Jakarta","c":"Jakarta - North West Central (NR)","tp":"New authorized store","p":"Bumilink","mg":"Dio Renaldi","m":{"12-2025":{"g":91710000,"t":175852500,"p":16,"pt":250,"h":1,"tb":5,"st":"Normal Operation"},"01-2026":{"g":527178000,"t":556566131,"p":57,"pt":660,"h":14,"tb":16,"st":"Normal Operation"},"02-2026":{"g":488949000,"t":450187500,"p":56,"pt":65,"h":6,"tb":25,"st":"Normal Operation"},"03-2026":{"g":584772000,"t":693485700,"p":580,"pt":900,"h":140,"tb":240,"st":"Normal Operation"},"04-2026":{"g":606603000,"t":601677657,"p":46,"pt":620,"h":13,"tb":31,"st":"Normal Operation"}}},{"id":"SQID00208","n":"Semper Av. Kramat Jaya Jakarta","c":"Jakarta - North West Central (NR)","tp":"New authorized store","p":"GTN","mg":"Bayu Andityo","m":{"12-2025":{"g":68246000,"t":0,"p":15,"pt":0,"h":2,"tb":3,"st":"Normal Operation"},"01-2026":{"g":285262000,"t":342101385,"p":71,"pt":500,"h":4,"tb":10,"st":"Normal Operation"},"02-2026":{"g":327537000,"t":450187500,"p":85,"pt":64,"h":3,"tb":13,"st":"Normal Operation"},"03-2026":{"g":543273000,"t":424760000,"p":1090,"pt":500,"h":110,"tb":300,"st":"Normal Operation"},"04-2026":{"g":479283000,"t":403199696,"p":88,"pt":600,"h":12,"tb":27,"st":"Normal Operation"}}},{"id":"SQID00187","n":"Lippo Mall Cikarang","c":"Jakarta - Bekasi (NR)","tp":"New authorized store","p":"Bumilink","mg":"Lalu Aby Almutabilla","m":{"12-2025":{"g":450911000,"t":0,"p":72,"pt":0,"h":15,"tb":28,"st":"Normal Operation"},"01-2026":{"g":850507000,"t":755163721,"p":111,"pt":1120,"h":20,"tb":40,"st":"Normal Operation"},"02-2026":{"g":720360000,"t":720300000,"p":99,"pt":110,"h":15,"tb":26,"st":"Normal Operation"},"03-2026":{"g":1000251000,"t":1089763285,"p":1230,"pt":1350,"h":290,"tb":440,"st":"Normal Operation"},"04-2026":{"g":938549000,"t":902609647,"p":100,"pt":960,"h":22,"tb":53,"st":"Normal Operation"}}},{"id":"SQID00173","n":"Puri Indah Mall Jakarta","c":"Jakarta - North West Central (NR)","tp":"New authorized store","p":"Telling","mg":"Andhika Juarsa","m":{"12-2025":{"g":719407500,"t":0,"p":67,"pt":0,"h":24,"tb":37,"st":"Normal Operation"},"01-2026":{"g":759289000,"t":945129631,"p":78,"pt":1200,"h":22,"tb":22,"st":"Normal Operation"},"02-2026":{"g":867383000,"t":850354175,"p":84,"pt":120,"h":18,"tb":32,"st":"Normal Operation"},"03-2026":{"g":1573291000,"t":1151969606,"p":1150,"pt":1380,"h":550,"tb":540,"st":"Normal Operation"},"04-2026":{"g":1002317000,"t":1233023565,"p":79,"pt":1100,"h":28,"tb":41,"st":"Normal Operation"}}},{"id":"SQID00168","n":"Lippo Plaza Ekalokasari Bogor","c":"Jakarta - Bogor Depok (NR)","tp":"New authorized store","p":"ITG","mg":"Herlinda Aprilianti","m":{"12-2025":{"g":89788000,"t":0,"p":14,"pt":0,"h":2,"tb":7,"st":"Normal Operation"},"01-2026":{"g":276178000,"t":353999459,"p":36,"pt":500,"h":6,"tb":16,"st":"Normal Operation"},"02-2026":{"g":348420000,"t":300125000,"p":52,"pt":42,"h":0,"tb":43,"st":"Normal Operation"},"03-2026":{"g":425510000,"t":342009834,"p":540,"pt":480,"h":100,"tb":220,"st":"Normal Operation"},"04-2026":{"g":358258000,"t":298284298,"p":44,"pt":320,"h":7,"tb":25,"st":"Normal Operation"}}},{"id":"SQID00156","n":"Mall Taman Anggrek Jakarta","c":"Jakarta - North West Central (NR)","tp":"New authorized store","p":"ITG","mg":"Doly Saputra","m":{"12-2025":{"g":509790000,"t":0,"p":46,"pt":0,"h":16,"tb":32,"st":"Normal Operation"},"01-2026":{"g":747356000,"t":498119424,"p":103,"pt":680,"h":19,"tb":29,"st":"Normal Operation"},"02-2026":{"g":621244000,"t":700291675,"p":103,"pt":99,"h":9,"tb":25,"st":"Normal Operation"},"03-2026":{"g":1039508000,"t":925501263,"p":840,"pt":1200,"h":390,"tb":210,"st":"Normal Operation"},"04-2026":{"g":1061997000,"t":861776649,"p":89,"pt":820,"h":35,"tb":50,"st":"Normal Operation"}}},{"id":"SQID00143","n":"Lotte Avenue Ciputra World Mall Jakarta Selatan","c":"Jakarta - South East (NR)","tp":"New authorized store","p":"Telling","mg":"Alan Valentio","m":{"01-2026":{"g":309290000,"t":707155874,"p":33,"pt":980,"h":9,"tb":12,"st":"Normal Operation"},"02-2026":{"g":677389000,"t":360150000,"p":52,"pt":50,"h":16,"tb":16,"st":"Normal Operation"},"03-2026":{"g":1055036000,"t":829418124,"p":870,"pt":900,"h":380,"tb":190,"st":"Normal Operation"},"04-2026":{"g":1001541000,"t":862114029,"p":64,"pt":750,"h":34,"tb":53,"st":"Normal Operation"}}},{"id":"SQID00160","n":"Living World Grand Wisata Bekasi","c":"Jakarta - Bekasi (NR)","tp":"New authorized store","p":"Unknown","mg":"-","m":{"01-2026":{"g":0,"t":177727500,"p":0,"pt":250,"h":0,"tb":0,"st":"Others"}}},{"id":"SQID00159","n":"Mall Matahari Jakarta Barat","c":"Jakarta - Tangerang (NR)","tp":"New authorized store","p":"PPP REG5","mg":"Kurnia Dwi Ramadhan Yuhaiman","m":{"01-2026":{"g":8942000,"t":0,"p":1,"pt":0,"h":0,"tb":1,"st":"Normal Operation"},"02-2026":{"g":210189000,"t":626384717,"p":30,"pt":87,"h":5,"tb":7,"st":"Normal Operation"},"03-2026":{"g":663905000,"t":178324903,"p":540,"pt":250,"h":210,"tb":780,"st":"Normal Operation"},"04-2026":{"g":385294000,"t":329634965,"p":48,"pt":390,"h":7,"tb":14,"st":"Normal Operation"}}},{"id":"SQID00189","n":"Arion Mall Jakarta Timur","c":"Jakarta - South East (NR)","tp":"New authorized store","p":"PPP REG1","mg":"Andreas Nanda","m":{"02-2026":{"g":111776000,"t":554486052,"p":16,"pt":77,"h":2,"tb":0,"st":"Normal Operation"},"03-2026":{"g":397526000,"t":178324903,"p":650,"pt":250,"h":80,"tb":100,"st":"Normal Operation"},"04-2026":{"g":353512000,"t":300768190,"p":61,"pt":300,"h":6,"tb":8,"st":"Normal Operation"}}},{"id":"SQID00210","n":"Mal Ciputra Cibubur","c":"Jakarta - Bogor Depok (NR)","tp":"New authorized store","p":"GTN","mg":"Debi Nurhaedi","m":{"02-2026":{"g":198989000,"t":0,"p":30,"pt":0,"h":4,"tb":11,"st":"Normal Operation"},"03-2026":{"g":836494000,"t":178324903,"p":1050,"pt":250,"h":280,"tb":400,"st":"Normal Operation"},"04-2026":{"g":569739000,"t":451289713,"p":71,"pt":700,"h":13,"tb":29,"st":"Normal Operation"}}},{"id":"SQID00186","n":"Lippo Plaza Kramat Jati Jakarta Timur","c":"Jakarta - South East (NR)","tp":"New authorized store","p":"PPP REG1","mg":"Adam Islami Sakti","m":{"02-2026":{"g":0,"t":0,"p":0,"pt":0,"h":0,"tb":0,"st":"Trial Operation"},"04-2026":{"g":81087000,"t":0,"p":9,"pt":0,"h":3,"tb":3,"st":"Trial Operation"}}},{"id":"SQID00248","n":"Bintaro Plaza Tangerang","c":"Jakarta - Banten (NR)","tp":"New authorized store","p":"PPP REG5","mg":"David Anjaya","m":{"03-2026":{"g":402923000,"t":0,"p":560,"pt":0,"h":90,"tb":330,"st":"Trial Operation"},"04-2026":{"g":544627000,"t":200604938,"p":73,"pt":310,"h":13,"tb":39,"st":"Trial Operation"}}},{"id":"SQID00339","n":"Living World Cibubur","c":"Jakarta - Bogor Depok (NR)","tp":"Authorized Sail store","p":"PPP REG1","mg":"Virza Pratama","m":{"04-2026":{"g":675848000,"t":622258532,"p":63,"pt":560,"h":16,"tb":37,"st":"Trial Operation"}}},{"id":"SQID00338","n":"Grand Mall Jakarta","c":"Jakarta - South East (NR)","tp":"Authorized Sail store","p":"PPP REG5","mg":"-","m":{"04-2026":{"g":81761000,"t":0,"p":13,"pt":0,"h":4,"tb":3,"st":"Trial Operation"}}}],"monthly":[{"mo":"01-2025","g":1092051400,"t":708482808,"p":147,"h":58,"tb":37,"sc":1},{"mo":"02-2025","g":777912200,"t":497338173,"p":140,"h":19,"tb":41,"sc":1},{"mo":"03-2025","g":1005079100,"t":627192668,"p":106,"h":34,"tb":45,"sc":1},{"mo":"04-2025","g":1567745500,"t":564829681,"p":174,"h":43,"tb":78,"sc":1},{"mo":"05-2025","g":1508595900,"t":3652231923,"p":211,"h":47,"tb":80,"sc":8},{"mo":"06-2025","g":16367492000,"t":4769113050,"p":25910,"h":431,"tb":956,"sc":33},{"mo":"07-2025","g":57366493400,"t":39206482809,"p":93610,"h":13570,"tb":3647,"sc":33},{"mo":"08-2025","g":33496845600,"t":40858599102,"p":5281,"h":639,"tb":2329,"sc":34},{"mo":"09-2025","g":25727030900,"t":33635198830,"p":41490,"h":530,"tb":13660,"sc":33},{"mo":"10-2025","g":39990723600,"t":45812503036,"p":54370,"h":20610,"tb":15680,"sc":33},{"mo":"11-2025","g":33389836000,"t":33938262585,"p":41250,"h":10600,"tb":20690,"sc":34},{"mo":"12-2025","g":40896496500,"t":41108990624,"p":5191,"h":1439,"tb":2209,"sc":41},{"mo":"01-2026","g":36391273000,"t":44613434423,"p":4399,"h":932,"tb":1850,"sc":43},{"mo":"02-2026","g":35327932000,"t":42164124076,"p":4641,"h":716,"tb":1510,"sc":46},{"mo":"03-2026","g":62562073000,"t":52034939332,"p":70750,"h":17070,"tb":28860,"sc":44},{"mo":"04-2026","g":47443945000,"t":46552884700,"p":5223,"h":1222,"tb":2186,"sc":47}],"partner_monthly":{"Unknown":{"06-2025":2979289800,"07-2025":3937746400,"08-2025":2566295400,"09-2025":2097702200,"10-2025":3880087000,"11-2025":2759900000,"12-2025":3628727000},"PPP REG1":{"06-2025":6435500700,"07-2025":28035141600,"08-2025":14117937000,"09-2025":10989148000,"10-2025":17903910600,"11-2025":15042390000,"12-2025":17112781000},"PPP REG5":{"06-2025":5779777000,"07-2025":23703712500,"08-2025":13812322300,"09-2025":10951298500,"10-2025":15423779000,"11-2025":13372912000,"12-2025":15690746000},"Fonel":{"06-2025":165587000,"07-2025":73700000,"08-2025":91636000,"09-2025":86791000,"10-2025":339518000,"11-2025":222082000,"12-2025":130452000},"GTN":{"06-2025":1007337500,"07-2025":1616192900,"08-2025":2908654900,"09-2025":1602091200,"10-2025":2443429000,"11-2025":1992552000,"12-2025":2318938000},"Telling":{"06-2025":0,"07-2025":0,"08-2025":0,"09-2025":0,"10-2025":0,"11-2025":0,"12-2025":872653500},"Bumilink":{"06-2025":0,"07-2025":0,"08-2025":0,"09-2025":0,"10-2025":0,"11-2025":0,"12-2025":542621000},"ITG":{"06-2025":0,"07-2025":0,"08-2025":0,"09-2025":0,"10-2025":0,"11-2025":0,"12-2025":599578000}},"months":["01-2025","02-2025","03-2025","04-2025","05-2025","06-2025","07-2025","08-2025","09-2025","10-2025","11-2025","12-2025","01-2026","02-2026","03-2026","04-2026"],"recent_months":["06-2025","07-2025","08-2025","09-2025","10-2025","11-2025","12-2025"]};
+
+const MONTHS = DATA.months;
+const RECENT = DATA.recent_months;
+const STORES = DATA.stores;
+const MONTHLY = DATA.monthly;
+const PM = DATA.partner_monthly;
+
+const PARTNER_COLORS = {
+  'PPP REG1':'#4a9eff','PPP REG5':'#b57af5',
+  'Telling':'#ff6b35','GTN':'#3dd68c',
+  'ITG':'#ffc947','Bumilink':'#ff8fa3',
+  'Fonel':'#56d9d9','Sentra':'#a78bfa','Unknown':'#8b96b0'
+};
+
+const ALL_PARTNERS = ['PPP REG1','PPP REG5','Telling','GTN','ITG','Bumilink','Fonel','Sentra'];
+const COMM_SHORT = {
+  'Jakarta - North West Central (NR)':'NW Central',
+  'Jakarta - Tangerang (NR)':'Tangerang',
+  'Jakarta - Bogor Depok (NR)':'Bogor Depok',
+  'Jakarta - Bekasi (NR)':'Bekasi',
+  'Jakarta - Banten (NR)':'Banten',
+  'Jakarta - South East (NR)':'South East',
+};
+
+let selectedMonth = '04-2026';
+let activePartners = new Set(['all']);
+let charts = {};
+
+function fmt(n){return n>=1e9?(n/1e9).toFixed(2)+'B':(n/1e6).toFixed(0)+'M';}
+function fmtM(n){return (n/1e6).toFixed(1);}
+function fmtK(n){return Math.round(n/1000).toLocaleString()+'K';}
+function shortName(n){
+  return n.replace('Xiaomi Authorized Store ','').replace(' Indonesia','')
+    .replace(' Jakarta','').replace(' Tangerang','').replace(' Depok','')
+    .replace(' Bogor','').replace(' Bekasi','').replace(' Cilegon','')
+    .replace('  ',' ').trim().slice(0,28);
+}
+
+// Build month selector
+function buildMonthSelector(){
+  const el = document.getElementById('monthSelector');
+  const display = ['Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
+  const months = RECENT;
+  el.innerHTML = months.map(m => {
+    const parts = m.split('-');
+    const mo = parseInt(parts[0]);
+    const yr = parts[1];
+    const label = new Date(parseInt(yr),mo-1).toLocaleString('en',{month:'short'})+' '+yr.slice(2);
+    return `<button class="month-btn ${m===selectedMonth?'active':''}" onclick="setMonth('${m}',this)">${label}</button>`;
+  }).join('');
+}
+
+function setMonth(m, btn){
+  selectedMonth = m;
+  document.querySelectorAll('.month-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+// Partner pills
+function buildPartnerPills(){
+  const el = document.getElementById('partnerPills');
+  let html = `<span class="p-pill active" data-p="all" onclick="togglePartner(this,'all')" style="border-color:#ff6b35;background:#ff6b35;">All partners</span>`;
+  ALL_PARTNERS.forEach(p => {
+    const c = PARTNER_COLORS[p]||'#888';
+    html += `<span class="p-pill" data-p="${p}" onclick="togglePartner(this,'${p}')" style="border-color:${c};">${p}</span>`;
+  });
+  el.innerHTML = html;
+}
+
+function togglePartner(el, p){
+  if(p==='all'){
+    activePartners = new Set(['all']);
+    document.querySelectorAll('.p-pill').forEach(b=>b.classList.remove('active'));
+    el.classList.add('active');
+    el.style.background='#ff6b35';
+  } else {
+    const allBtn = document.querySelector('.p-pill[data-p="all"]');
+    if(activePartners.has('all')){
+      activePartners.delete('all');
+      allBtn.classList.remove('active');
+      allBtn.style.background='transparent';
+    }
+    if(activePartners.has(p)){
+      activePartners.delete(p);
+      el.classList.remove('active');
+      el.style.background='transparent';
+    } else {
+      activePartners.add(p);
+      el.classList.add('active');
+      el.style.background=PARTNER_COLORS[p]||'#888';
+    }
+    if(activePartners.size===0){
+      activePartners.add('all');
+      allBtn.classList.add('active');
+      allBtn.style.background='#ff6b35';
+    }
+  }
+  applyFilters();
+}
+
+function getFiltered(){
+  const area = document.getElementById('areaFilter').value;
+  const type = document.getElementById('typeFilter').value;
+  return STORES.filter(s => {
+    const mo = s.m[selectedMonth];
+    if(!mo) return false;
+    if(area!=='all' && s.c!==area) return false;
+    if(type!=='all' && s.tp!==type) return false;
+    if(!activePartners.has('all') && !activePartners.has(s.p)) return false;
+    return true;
+  });
+}
+
+function getPrevMonth(m){
+  const idx = MONTHS.indexOf(m);
+  return idx>0?MONTHS[idx-1]:null;
+}
+
+function getYoYMonth(m){
+  const parts = m.split('-');
+  const mo = parts[0];
+  const yr = (parseInt(parts[1])-1).toString();
+  const yoy = mo+'-'+yr;
+  return MONTHS.includes(yoy)?yoy:null;
+}
+
+function applyFilters(){
+  const data = getFiltered();
+  const compare = document.getElementById('compareMode').value;
+  renderKPIs(data, compare);
+  renderTrendChart();
+  renderPartnerChart(data);
+  renderMomChart(data, compare);
+  renderAchChart(data);
+  renderPartnerAchBars(data);
+  renderStoreTable(data, compare);
+  document.getElementById('tableMonth').textContent = '· '+selectedMonth;
+  document.getElementById('partnerMonth').textContent = '· '+selectedMonth;
+  document.getElementById('partnerAchMonth').textContent = '· '+selectedMonth;
+}
+
+function renderKPIs(data, compare){
+  const cur = selectedMonth;
+  const prev = compare==='mom'?getPrevMonth(cur):getYoYMonth(cur);
+  const gmv = data.reduce((s,r)=>s+(r.m[cur]?.g||0),0);
+  const tgt = data.reduce((s,r)=>s+(r.m[cur]?.t||0),0);
+  const ach = tgt>0?gmv/tgt*100:0;
+  const phone = data.reduce((s,r)=>s+(r.m[cur]?.p||0),0);
+  const he = data.reduce((s,r)=>s+(r.m[cur]?.h||0),0);
+  const tab = data.reduce((s,r)=>s+(r.m[cur]?.tb||0),0);
+  const stores = data.length;
+
+  let gmvChg = null, achChg = null, phoneChg = null;
+  if(prev){
+    const prevGmv = data.reduce((s,r)=>s+(r.m[prev]?.g||0),0);
+    const prevPhone = data.reduce((s,r)=>s+(r.m[prev]?.p||0),0);
+    if(prevGmv>0) gmvChg=(gmv-prevGmv)/prevGmv*100;
+    if(prevPhone>0) phoneChg=(phone-prevPhone)/prevPhone*100;
+  }
+
+  const label = compare==='mom'?'MoM':'YoY';
+  const achCls = ach>=100?'up':ach>=85?'neutral':'down';
+  const gmvCls = gmvChg===null?'neutral':gmvChg>=0?'up':'down';
+  const phoneCls = phoneChg===null?'neutral':phoneChg>=0?'up':'down';
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi orange">
+      <div class="kpi-label">Total GMV</div>
+      <div class="kpi-value">${fmt(gmv)}</div>
+      <div class="kpi-sub ${gmvCls}">${gmvChg!==null?(gmvChg>=0?'▲':'▼')+Math.abs(gmvChg).toFixed(1)+'% '+label:'—'}</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">Achievement</div>
+      <div class="kpi-value">${ach.toFixed(1)}%</div>
+      <div class="kpi-sub ${achCls}">vs ${fmt(tgt)} target</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Phone SO</div>
+      <div class="kpi-value">${phone.toLocaleString()}</div>
+      <div class="kpi-sub ${phoneCls}">${phoneChg!==null?(phoneChg>=0?'▲':'▼')+Math.abs(phoneChg).toFixed(1)+'% '+label:'—'}</div>
+    </div>
+    <div class="kpi yellow">
+      <div class="kpi-label">High-end SO</div>
+      <div class="kpi-value">${he.toLocaleString()}</div>
+      <div class="kpi-sub neutral">premium devices</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Tablet SO</div>
+      <div class="kpi-value">${tab.toLocaleString()}</div>
+      <div class="kpi-sub neutral">units</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Stores</div>
+      <div class="kpi-value">${stores}</div>
+      <div class="kpi-sub neutral">of 50 tracked</div>
+    </div>`;
+}
+
+function renderTrendChart(){
+  const months = RECENT;
+  const labels = months.map(m=>{
+    const p=m.split('-');return new Date(parseInt(p[1]),parseInt(p[0])-1).toLocaleString('en',{month:'short',year:'2-digit'});
+  });
+  const gmvData = months.map(m=>{
+    const mt = MONTHLY.find(x=>x.mo===m);
+    return mt?Math.round(mt.g/1e6):0;
+  });
+  const tgtData = months.map(m=>{
+    const mt = MONTHLY.find(x=>x.mo===m);
+    return mt?Math.round(mt.t/1e6):0;
+  });
+  if(charts.trend) charts.trend.destroy();
+  const ctx = document.getElementById('trendChart');
+  document.getElementById('trendNote').textContent = '· All stores combined';
+  charts.trend = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'GMV',data:gmvData,backgroundColor:months.map(m=>m===selectedMonth?'#ff6b35':'rgba(255,107,53,0.35)'),borderRadius:4,order:2},
+        {label:'Target',data:tgtData,type:'line',borderColor:'rgba(255,201,71,0.7)',backgroundColor:'transparent',borderWidth:1.5,pointRadius:3,pointBackgroundColor:'#ffc947',tension:0.3,order:1},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': IDR '+ctx.raw.toLocaleString()+'M'}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5a6480',font:{size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5a6480',font:{size:11},callback:v=>v.toLocaleString()+'M'}},
+      }
+    }
+  });
+}
+
+function renderPartnerChart(data){
+  const partners = ALL_PARTNERS.filter(p=>data.some(s=>s.p===p));
+  const values = partners.map(p=>data.filter(s=>s.p===p).reduce((s,r)=>s+(r.m[selectedMonth]?.g||0),0)/1e6);
+  const colors = partners.map(p=>PARTNER_COLORS[p]||'#888');
+  document.getElementById('partnerLegend').innerHTML = partners.map((p,i)=>`<span class="leg-item"><span class="leg-dot" style="background:${colors[i]}"></span>${p}</span>`).join('');
+  if(charts.partner) charts.partner.destroy();
+  charts.partner = new Chart(document.getElementById('partnerChart'),{
+    type:'doughnut',
+    data:{labels:partners,datasets:[{data:values,backgroundColor:colors,borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+ctx.raw.toFixed(0)+'M'}}}}
+  });
+}
+
+function renderMomChart(data, compare){
+  const prev = compare==='mom'?getPrevMonth(selectedMonth):getYoYMonth(selectedMonth);
+  if(!prev){document.getElementById('momChartWrap').innerHTML='<p style="color:#5a6480;font-size:13px;text-align:center;padding:30px;">No previous period data</p>';return;}
+  document.getElementById('momChartWrap').innerHTML='<canvas id="momChart"></canvas>';
+  const stores = data.filter(s=>s.m[selectedMonth]&&s.m[prev]&&s.m[prev].g>0);
+  stores.sort((a,b)=>{
+    const ma=(a.m[selectedMonth].g-a.m[prev].g)/a.m[prev].g;
+    const mb=(b.m[selectedMonth].g-b.m[prev].g)/b.m[prev].g;
+    return mb-ma;
+  });
+  const top = stores.slice(0,15);
+  const labels = top.map(s=>shortName(s.n));
+  const values = top.map(s=>parseFloat(((s.m[selectedMonth].g-s.m[prev].g)/s.m[prev].g*100).toFixed(1)));
+  const colors = values.map(v=>v>=0?'rgba(61,214,140,0.75)':'rgba(255,82,82,0.75)');
+  const h = Math.max(280, top.length*26+80);
+  document.getElementById('momChartWrap').style.height=h+'px';
+  charts.mom = new Chart(document.getElementById('momChart'),{
+    type:'bar',
+    data:{labels,datasets:[{data:values,backgroundColor:colors,borderRadius:3}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+(ctx.raw>=0?'+':'')+ctx.raw+'%'}}},
+      scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5a6480',font:{size:11},callback:v=>v+'%'}},y:{grid:{display:false},ticks:{color:'#8b96b0',font:{size:11}}}}}
+  });
+}
+
+function renderAchChart(data){
+  const b={'<60%':0,'60-80%':0,'80-100%':0,'100-120%':0,'>120%':0};
+  data.forEach(s=>{
+    const mo=s.m[selectedMonth];
+    if(!mo||mo.t<=0) return;
+    const p=mo.g/mo.t*100;
+    if(p>=120) b['>120%']++;
+    else if(p>=100) b['100-120%']++;
+    else if(p>=80) b['80-100%']++;
+    else if(p>=60) b['60-80%']++;
+    else b['<60%']++;
+  });
+  if(charts.ach) charts.ach.destroy();
+  charts.ach = new Chart(document.getElementById('achChart'),{
+    type:'bar',
+    data:{labels:Object.keys(b),datasets:[{data:Object.values(b),backgroundColor:['rgba(255,82,82,0.7)','rgba(255,201,71,0.7)','rgba(139,150,176,0.5)','rgba(61,214,140,0.7)','rgba(74,158,255,0.7)'],borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.raw+' stores'}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#5a6480',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5a6480',font:{size:11},stepSize:1}}}}
+  });
+}
+
+function renderPartnerAchBars(data){
+  const el = document.getElementById('partnerAchBars');
+  const partners = ALL_PARTNERS.filter(p=>data.some(s=>s.p===p));
+  let html='';
+  partners.forEach(p=>{
+    const pStores = data.filter(s=>s.p===p&&s.m[selectedMonth]);
+    if(!pStores.length) return;
+    const gmv = pStores.reduce((s,r)=>s+(r.m[selectedMonth]?.g||0),0);
+    const tgt = pStores.reduce((s,r)=>s+(r.m[selectedMonth]?.t||0),0);
+    const ach = tgt>0?Math.round(gmv/tgt*100):0;
+    const barW = Math.min(ach,150)/150*100;
+    const c = PARTNER_COLORS[p]||'#888';
+    const achColor = ach>=100?'var(--green)':ach>=85?'var(--yellow)':'var(--red)';
+    html+=`<div style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+        <span style="font-size:12px;color:${c};font-weight:500;">${p}</span>
+        <span style="font-size:12px;font-family:var(--mono);color:${achColor};">${ach}%</span>
+      </div>
+      <div style="height:5px;background:var(--bg4);border-radius:3px;">
+        <div style="height:5px;width:${barW}%;background:${c};border-radius:3px;opacity:0.8;"></div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+function renderStoreTable(data, compare){
+  const prev = compare==='mom'?getPrevMonth(selectedMonth):getYoYMonth(selectedMonth);
+  const sorted = [...data].sort((a,b)=>(b.m[selectedMonth]?.g||0)-(a.m[selectedMonth]?.g||0));
+  const body = document.getElementById('storeTableBody');
+  const label = compare==='mom'?'MoM':'YoY';
+  body.innerHTML = sorted.map((s,i)=>{
+    const mo = s.m[selectedMonth]||{};
+    const gmv = mo.g||0, tgt = mo.t||0;
+    const ach = tgt>0?gmv/tgt*100:0;
+    const barW = Math.min(ach,150)/150*100;
+    const achColor = ach>=100?'var(--green)':ach>=85?'var(--yellow)':'var(--red)';
+    const prevMo = prev?s.m[prev]:null;
+    let chgHtml='';
+    if(prevMo&&prevMo.g>0){
+      const chg=(gmv-prevMo.g)/prevMo.g*100;
+      chgHtml=`<span class="mom-badge ${chg>=0?'mom-up':'mom-down'}">${chg>=0?'+':''}${chg.toFixed(1)}%</span>`;
+    } else if(!prevMo){
+      chgHtml='<span class="mom-badge mom-new">new</span>';
+    }
+    const c = PARTNER_COLORS[s.p]||'#888';
+    const comm = COMM_SHORT[s.c]||s.c;
+    return `<tr>
+      <td class="rank">${i+1}</td>
+      <td class="store-name">${s.n.replace('Xiaomi Authorized Store ','').replace(' Indonesia','').trim()}</td>
+      <td><span class="partner-badge" style="background:${c}22;color:${c}">${s.p}</span></td>
+      <td><span style="font-size:11px;color:var(--text3)">${comm}</span></td>
+      <td style="font-family:var(--mono);font-weight:600">${fmtM(gmv)}</td>
+      <td>
+        <div class="ach-wrap">
+          <div class="ach-bar"><div class="ach-fill" style="width:${barW}%;background:${achColor}"></div></div>
+          <span style="font-size:12px;font-family:var(--mono);color:${achColor};min-width:38px">${tgt>0?ach.toFixed(0)+'%':'—'}</span>
+        </div>
+      </td>
+      <td>${chgHtml}</td>
+      <td class="so-num">${mo.p||0}</td>
+      <td class="so-num">${mo.h||0}</td>
+      <td class="so-num">${mo.tb||0}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ANALYSIS TAB
+function buildAnalysis(){
+  const cur = '04-2026';
+  const prev = '03-2026';
+  const yoy = '04-2025';
+  const allStores = STORES.filter(s=>s.m[cur]);
+
+  const totalGMV = allStores.reduce((s,r)=>s+(r.m[cur]?.g||0),0);
+  const totalTgt = allStores.reduce((s,r)=>s+(r.m[cur]?.t||0),0);
+  const ach = totalGMV/totalTgt*100;
+  const prevGMV = allStores.reduce((s,r)=>s+(r.m[prev]?.g||0),0);
+  const mom = (totalGMV-prevGMV)/prevGMV*100;
+  const totalPhone = allStores.reduce((s,r)=>s+(r.m[cur]?.p||0),0);
+  const totalHE = allStores.reduce((s,r)=>s+(r.m[cur]?.h||0),0);
+
+  // Classify each store
+  const storeAnalysis = allStores.map(s=>{
+    const mo = s.m[cur]||{};
+    const pmo = s.m[prev]||{};
+    const gmv = mo.g||0, tgt = mo.t||0;
+    const achP = tgt>0?gmv/tgt*100:0;
+    const momP = pmo.g>0?(gmv-pmo.g)/pmo.g*100:null;
+    let status='warn', flag='';
+    if(achP>=110&&(momP===null||momP>-10)) { status='great'; flag='🌟 Outperformer'; }
+    else if(achP>=100) { status='good'; flag='✅ On Target'; }
+    else if(achP>=80) { status='warn'; flag='⚠️ Near Miss'; }
+    else { status='bad'; flag='🔴 Below Target'; }
+    if(momP!==null&&momP<=-40) flag+=' · ⬇️ Sharp Drop';
+    if(momP!==null&&momP>=20) flag+=' · 📈 Strong Trend';
+    return {...s, gmv, tgt, achP, momP, flag, status, mo, pmo};
+  }).sort((a,b)=>b.gmv-a.gmv);
+
+  const outperformers = storeAnalysis.filter(s=>s.status==='great');
+  const onTarget = storeAnalysis.filter(s=>s.status==='good');
+  const nearMiss = storeAnalysis.filter(s=>s.status==='warn');
+  const belowTarget = storeAnalysis.filter(s=>s.status==='bad');
+
+  // Partner summary
+  const partnerSummary = {};
+  ALL_PARTNERS.forEach(p=>{
+    const ps = storeAnalysis.filter(s=>s.p===p);
+    if(!ps.length) return;
+    const g=ps.reduce((s,r)=>s+r.gmv,0);
+    const t=ps.reduce((s,r)=>s+r.tgt,0);
+    partnerSummary[p]={gmv:g,tgt:t,ach:t>0?g/t*100:0,count:ps.length};
+  });
+
+  function storeRowHTML(s){
+    const achColor = s.achP>=100?'var(--green)':s.achP>=85?'var(--yellow)':'var(--red)';
+    const momStr = s.momP!==null?(s.momP>=0?'▲+':'▼')+s.momP.toFixed(1)+'% MoM':'new store';
+    const momCol = s.momP===null?'var(--blue)':s.momP>=0?'var(--green)':'var(--red)';
+    const name = s.n.replace('Xiaomi Authorized Store ','').replace(' Indonesia','').trim();
+
+    let rec='';
+    if(s.achP>=110) rec='Maintain current momentum. Explore upselling high-end and tablet bundles.';
+    else if(s.achP>=100) rec='Solid performance. Focus on defending Phone SO and improving high-end mix.';
+    else if(s.achP>=80) rec='Close to target. Identify top 2–3 SKUs underperforming vs. plan and address inventory/display gaps.';
+    else if(s.achP>=60) rec='Needs intervention. Review staffing levels, promoter activity, and in-store execution urgently.';
+    else rec='Critical attention needed. Escalate to partner management — evaluate root cause (traffic, competition, ops issues).';
+
+    if(s.momP!==null&&s.momP<=-40) rec+=' Sharp MoM decline warrants an on-site visit this week.';
+    if(s.momP!==null&&s.momP>=20) rec+=' Strong MoM momentum — capture best practices to replicate across partner.';
+
+    return `<div class="store-row ${s.status}">
+      <div class="store-row-header">
+        <span class="store-row-name">${name}</span>
+        <span class="partner-badge" style="background:${PARTNER_COLORS[s.p]||'#888'}22;color:${PARTNER_COLORS[s.p]||'#888'}">${s.p}</span>
+        <span style="font-size:11px;color:var(--text3)">${s.flag}</span>
+      </div>
+      <div class="store-row-meta">
+        GMV: <span class="highlight">${fmtM(s.gmv)}M</span> &nbsp;|&nbsp;
+        Achievement: <span style="color:${achColor};font-weight:600">${s.tgt>0?s.achP.toFixed(0)+'%':'no target'}</span> &nbsp;|&nbsp;
+        <span style="color:${momCol}">${momStr}</span> &nbsp;|&nbsp;
+        Phone SO: <span class="highlight">${s.mo.p||0}</span> &nbsp;|&nbsp;
+        High-end: <span class="highlight">${s.mo.h||0}</span>
+      </div>
+      <div class="store-row-body" style="margin-top:5px;">💡 <span class="highlight">Recommendation:</span> ${rec}</div>
+    </div>`;
+  }
+
+  const html = `
+    <div class="analysis-section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--orange-bg)">📊</div>
+        <div><div class="section-title">Executive Summary — April 2026</div>
+        <div class="section-sub">Overall performance vs. target, trends, and key highlights</div></div>
+      </div>
+      <div class="exec-grid">
+        <div class="exec-stat">
+          <div class="exec-stat-label">Total GMV</div>
+          <div class="exec-stat-val" style="color:var(--orange)">${fmt(totalGMV)}</div>
+          <div class="exec-stat-note">vs ${fmt(totalTgt)} target</div>
+        </div>
+        <div class="exec-stat">
+          <div class="exec-stat-label">Achievement</div>
+          <div class="exec-stat-val" style="color:${ach>=100?'var(--green)':'var(--yellow)'}">${ach.toFixed(1)}%</div>
+          <div class="exec-stat-note">${ach>=100?'✅ Above target':'⚠️ Below target'}</div>
+        </div>
+        <div class="exec-stat">
+          <div class="exec-stat-label">vs March 2026</div>
+          <div class="exec-stat-val" style="color:${mom>=0?'var(--green)':'var(--red)'}">${mom>=0?'+':''}${mom.toFixed(1)}%</div>
+          <div class="exec-stat-note">MoM GMV change</div>
+        </div>
+      </div>
+      <div class="insight-list">
+        <div class="insight-item">
+          <div class="insight-dot" style="background:var(--green)"></div>
+          <div class="insight-text">Overall GMV of <strong>${fmt(totalGMV)}</strong> achieved <strong>${ach.toFixed(1)}% of target</strong> — the network is above target for April 2026, driven by strong performance from PPP REG5 and ITG stores.</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-dot" style="background:var(--red)"></div>
+          <div class="insight-text">MoM decline of <strong>${Math.abs(mom).toFixed(1)}%</strong> vs March 2026 is significant — March was an exceptionally strong month (+${((62562073000-35327932000)/35327932000*100).toFixed(0)}% vs Feb). April's pullback is partly seasonal post-Ramadan normalization.</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-dot" style="background:var(--yellow)"></div>
+          <div class="insight-text"><strong>${belowTarget.length} stores</strong> are below target this month, with <strong>${belowTarget.filter(s=>s.achP<80).length}</strong> critically below 80%. Priority attention: ${belowTarget.filter(s=>s.achP<80).slice(0,3).map(s=>s.n.replace('Xiaomi Authorized Store ','').replace(' Indonesia','').trim()).join(', ')}.</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-dot" style="background:var(--blue)"></div>
+          <div class="insight-text"><strong>${outperformers.length + onTarget.length} stores</strong> met or exceeded target. Top performers: ${outperformers.slice(0,3).map(s=>s.n.replace('Xiaomi Authorized Store ','').replace(' Indonesia','').trim()).join(', ')}.</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-dot" style="background:var(--purple)"></div>
+          <div class="insight-text">High-end SO of <strong>${totalHE.toLocaleString()} units</strong> and Phone SO of <strong>${totalPhone.toLocaleString()} units</strong> show healthy premium mix. ITG (Mall Taman Anggrek) leads high-end ratio at ${storeAnalysis.find(s=>s.id==='SQID00156')?.mo.h||0} units.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="analysis-section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--green-bg)">📈</div>
+        <div><div class="section-title">What's Up — Stores Beating Target or Showing Strong Growth</div>
+        <div class="section-sub">${outperformers.length + onTarget.length} stores on or above target</div></div>
+      </div>
+      <div class="store-analysis-grid">
+        ${[...outperformers,...onTarget].map(storeRowHTML).join('')}
+      </div>
+    </div>
+
+    <div class="analysis-section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--yellow-bg)">⚠️</div>
+        <div><div class="section-title">What's Down — Stores Missing Target or Declining</div>
+        <div class="section-sub">${nearMiss.length + belowTarget.length} stores need attention</div></div>
+      </div>
+      <div class="store-analysis-grid">
+        ${[...nearMiss,...belowTarget].map(storeRowHTML).join('')}
+      </div>
+    </div>
+
+    <div class="analysis-section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--blue-bg)">🏢</div>
+        <div><div class="section-title">Partner Summary</div>
+        <div class="section-sub">Achievement and GMV by distributor partner</div></div>
+      </div>
+      <div class="insight-list">
+        ${Object.entries(partnerSummary).sort((a,b)=>b[1].gmv-a[1].gmv).map(([p,v])=>{
+          const c = PARTNER_COLORS[p]||'#888';
+          const achCol = v.ach>=100?'var(--green)':v.ach>=85?'var(--yellow)':'var(--red)';
+          const rec = v.ach>=110?'Excellent — replicate best practices across stores.'
+            :v.ach>=100?'On track — maintain discipline and execution standards.'
+            :v.ach>=85?'Near miss — review underperforming stores with partner management this week.'
+            :'Below target — escalate. Schedule partner review meeting, investigate root causes per store.';
+          return `<div class="insight-item">
+            <div class="insight-dot" style="background:${c}"></div>
+            <div class="insight-text">
+              <strong style="color:${c}">${p}</strong> (${v.count} stores) — GMV: <strong>${fmt(v.gmv)}</strong>, Achievement: <span style="color:${achCol};font-weight:600">${v.ach.toFixed(1)}%</span><br>
+              <span class="note">💡 ${rec}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="analysis-section">
+      <div class="section-header">
+        <div class="section-icon" style="background:var(--orange-bg)">🎯</div>
+        <div><div class="section-title">Action Items for This Week</div>
+        <div class="section-sub">Prioritized actions for store managers and partner meetings</div></div>
+      </div>
+      <div class="insight-list">
+        <div class="insight-item">
+          <div class="insight-dot" style="background:var(--red)"></div>
+          <div class="insight-text"><strong>🔴 URGENT:</strong> ${belowTarget.filter(s=>s.achP<70).map(s=>s.n.replace('Xiaomi Authorized Store ','').replace(' Indonesia','').trim()).join(', ')} — all below 70% achievement. Schedule on-site visit or partner call within 48 hours. Review traffic data, promoter availability, and stock levels.</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-dot" style="background:var(--yellow)"></div>
+          <div class="insight-text"><strong>⚠️ THIS WEEK:</strong> ${nearMiss.slice(0,4).map(s=>s.n.replace('Xiaomi Authorized Store ','').replace(' Indonesia','').trim()).join(', ')} — between 80–99% achievement. Push for end-of-month catch-up activations, promoter incentives, or bundle campaigns.</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-dot" style="background:var(--blue)"></div>
+          <div class="insight-text"><strong>📊 REVIEW:</strong> April's MoM decline (-${Math.abs(mom).toFixed(1)}%) is expected post-Ramadan. Set realistic May targets, plan mid-month check-ins, and align with partners on May promotional calendar.</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-dot" style="background:var(--green)"></div>
+          <div class="insight-text"><strong>🌟 REPLICATE:</strong> ${outperformers.slice(0,2).map(s=>s.n.replace('Xiaomi Authorized Store ','').replace(' Indonesia','').trim()).join(' and ')} are outperforming significantly. Document their in-store execution, staffing model, and promotional approach to share as best practice in weekly meeting.</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-dot" style="background:var(--purple)"></div>
+          <div class="insight-text"><strong>💎 HIGH-END PUSH:</strong> High-end SO rate is healthy but uneven. Stores with high Phone SO but low High-end SO ratio should receive targeted training on upsell techniques and premium product knowledge.</div>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('analysisContent').innerHTML = html;
+}
+
+function showTab(tab, btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-dashboard').style.display = tab==='dashboard'?'block':'none';
+  document.getElementById('tab-analysis').style.display = tab==='analysis'?'block':'none';
+  if(tab==='analysis') buildAnalysis();
+}
+
+function exportReport(){
+  const w = window.open('','_blank');
+  const analysis = document.getElementById('analysisContent').innerHTML || (() => {buildAnalysis(); return document.getElementById('analysisContent').innerHTML;})();
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Xiaomi Sales Analysis — April 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body{font-family:'DM Sans',sans-serif;background:#0f1117;color:#e8edf5;padding:32px;max-width:900px;margin:0 auto;}
+    ${document.querySelector('style').innerHTML}
+  </style></head><body>
+  <h1 style="font-size:22px;font-weight:600;margin-bottom:4px;">Xiaomi Indonesia — Weekly Sales Analysis</h1>
+  <p style="color:#8b96b0;margin-bottom:24px;">April 2026 · Jakarta–Banten Region · Generated ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}</p>
+  <div class="analysis-wrap">${analysis}</div>
+  </body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(),500);
+}
+
+// INIT
+buildMonthSelector();
+buildPartnerPills();
+applyFilters();
+</script>
+</body>
+</html>
